@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+
+:root {
+  --text-color: black;
+  --background-color: #0f4c8133;
+  --accent-color: #7986cb;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: 'Jua', sans-serif;
+}
+
+body {
+  background-color: #fafafa;
+  margin: 0;
+}
+
+a {
+  text-decoration: none;
+  color: var(--text-color);
+}
+
+.errorMessage{
+  color: red;
+  margin: 0px;
+}
+.responsive_nav{
+  width: 100%;
+  margin: auto;
+  max-width: 80rem;
+  position: relative;
+  background-color: var(--background-color);
+}
+.responsive_nav:before{
+  background-color: var(--background-color);
+}
+
+.reservationList{
+	color: black
+}
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.navbar__logo {
+  font-size: 24px;
+  color: var(--text-color);
+}
+
+.navbar__logo i {
+  color: var(--accent-color);
+}
+
+.navbar__menu {
+  font-size: 20px;
+  display: flex;
+  padding-left: 0;
+  list-style: none;
+  margin-bottom: 5px;
+}
+
+.navbar__menu li {
+  padding: 8px 35px;
+}
+
+.signOut:hover{
+  cursor: pointer;
+}
+
+.navbar__menu li:hover {
+  background-color: var(--accent-color);
+  border-radius: 4px;
+}
+
+.navbar__icons {
+  font-size: 15px;
+  list-style: none;
+  color: var(--text-color);
+  display: flex;
+  padding-left: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.navbar__icons li {
+  padding: 8px 12px;
+}
+.navbar__icons li:hover {
+  background-color: var(--accent-color);
+  border-radius: 4px;
+}
+
+.navbar__toggleBtn {
+  display: none;
+  position: absolute;
+  right: 32px;
+  font-size: 30px;
+  color: var(--accent-color);
+}
+
+@media screen and (max-width: 59rem) {
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 8px 24px;
+  }
+
+  .navbar__menu {
+    display: none;
+    flex-direction: column;
+    text-align: center;
+    width: 100%;
+  }
+
+  .navbar__menu a {
+    display: block;
+  }
+
+  .navbar__icons {
+    display: none;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .navbar__toggleBtn {
+    display: block;
+  }
+
+  .navbar__menu.active,
+  .navbar__icons.active {
+    display: flex;
+  }
+}
+
+/* .active{
+	background-color: tomato;
+	decoration: none;
+} */
