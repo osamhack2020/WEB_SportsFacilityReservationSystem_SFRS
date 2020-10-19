@@ -9,7 +9,7 @@ import PrivateRoute from "./privateRoute";
 import SignUp from "./signUp";
 import SignIn from "./signIn";
 import MyInfoPage from "./myInfoPage";
-import AddFacility from "./addFacility";
+import ApproveCamp from "./approveCamp";
 import AddCamp from "./addCamp";
 import CampList from "./campList";
 import Checkout from "./reservation";
@@ -23,6 +23,7 @@ import GridContainer from "./gridContainer.js";
 import GridItem from "./gridItem.js";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
+import TestPage from "./indexPageDeprecated";
 import {
   BrowserRouter as Router,
   Switch,
@@ -141,49 +142,57 @@ const App = () => {
                     return (
                       <div>
                         <li>
-                          <NavLink to="/addCamp" onClick={handleClick}>
-                            관리자페이지
-                          </NavLink>
+                          {userInfo.rootAdmin === false ? (
+                            <NavLink to="/addCamp">관리자페이지</NavLink>
+                          ) : (
+                            <NavLink to="/addCamp" onClick={handleClick}>
+                              관리자페이지
+                            </NavLink>
+                          )}
                         </li>
-                        <StyledMenu
-                          id="customized-menu"
-                          anchorEl={anchorEl}
-                          keepMounted
-                          open={Boolean(anchorEl)}
-                          onClose={handleClose}
-                        >
-                          <StyledMenuItem
-                            id="fistSmallMenu"
-                            style={{
-                              padding: 0,
-                            }}
+                        {userInfo.rootAdmin === true ? (
+                          <StyledMenu
+                            id="customized-menu"
+                            anchorEl={anchorEl}
+                            keepMounted
+                            open={Boolean(anchorEl)}
+                            onClose={handleClose}
                           >
-                            <NavLink
-                              to="/addCamp"
+                            <StyledMenuItem
+                              id="fistSmallMenu"
                               style={{
-                                padding: "6px 16px",
-                                display: "inline-block",
+                                padding: 0,
                               }}
                             >
-                              부대 관리
-                            </NavLink>
-                          </StyledMenuItem>
-                          <StyledMenuItem
-                            style={{
-                              padding: 0,
-                            }}
-                          >
-                            <NavLink
-                              to="/addFacility"
+                              <NavLink
+                                to="/addCamp"
+                                style={{
+                                  padding: "6px 16px",
+                                  display: "inline-block",
+                                }}
+                              >
+                                부대 관리
+                              </NavLink>
+                            </StyledMenuItem>
+                            <StyledMenuItem
                               style={{
-                                padding: "6px 16px",
-                                display: "inline-block",
+                                padding: 0,
                               }}
                             >
-                              체육시설 관리
-                            </NavLink>
-                          </StyledMenuItem>
-                        </StyledMenu>
+                              <NavLink
+                                to="/approveCamp"
+                                style={{
+                                  padding: "6px 16px",
+                                  display: "inline-block",
+                                }}
+                              >
+                                관리자 승인
+                              </NavLink>
+                            </StyledMenuItem>
+                          </StyledMenu>
+                        ) : (
+                          <span></span>
+                        )}
                       </div>
                     );
                   }
@@ -261,13 +270,15 @@ const App = () => {
 
           <Route path="/myInfoPage" component={MyInfoPage} />
 
+          <Route path="/test" component={TestPage} />
+
           <Route
-            path="/addFacility"
-            component={AddFacility}
+            path="/approveCamp"
+            component={ApproveCamp}
             // render={() => <AddFacility user={currentUser} />}
           />
 
-          <Route path="/addCamp" component={AddCamp} />
+          <PrivateRoute path="/addCamp" component={AddCamp} />
 
           <Route path="/signUp" component={SignUp} />
 

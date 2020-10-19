@@ -8,7 +8,6 @@ import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
-import Link from "@material-ui/core/Link";
 import AddIcon from "@material-ui/icons/Add";
 import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import app from "./firebase";
@@ -31,18 +30,21 @@ import BottomNavigationAction from "@material-ui/core/BottomNavigationAction";
 import HourglassEmptyIcon from "@material-ui/icons/HourglassEmpty";
 import AddToQueueIcon from "@material-ui/icons/AddToQueue";
 
-function Copyright() {
+const Copyright = () => {
   return (
-    <Typography variant="body2" color="textSecondary" align="center">
-      {"Copyright © "}
-      <Link color="inherit" href="https://material-ui.com/">
-        Your Website
-      </Link>{" "}
-      {new Date().getFullYear()}
+    <Typography
+      variant="body2"
+      color="textSecondary"
+      align="center"
+      style={{
+        fontFamily: ["Jua", '"sans-serif"'],
+      }}
+    >
+      {"Copyright © 체육시설 예약체계 "} {new Date().getFullYear()}
       {"."}
     </Typography>
   );
-}
+};
 
 const useStyles = makeStyles((theme) => ({
   heroContent: {
@@ -54,12 +56,12 @@ const useStyles = makeStyles((theme) => ({
   },
   navigationStyle: {
     "&$navigationSelected": {
-      marginTop: "5px",
-      fontSize: "18px",
+      marginTop: "10px",
+      fontSize: "14px",
       fontFamily: ["Jua", '"sans-serif"'],
     },
-    fontSize: "18px",
-    marginTop: "5px",
+    fontSize: "14px",
+    marginTop: "10px",
     fontFamily: ["Jua", '"sans-serif"'],
   },
   navigationSelected: {},
@@ -111,7 +113,8 @@ const useStyles = makeStyles((theme) => ({
   },
   footer: {
     backgroundColor: theme.palette.background.paper,
-    padding: theme.spacing(6),
+    padding: theme.spacing(3, 2),
+    marginTop: "auto",
   },
   breadcrumbs: {
     backgroundColor: theme.palette.background.paper,
@@ -121,6 +124,7 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
   },
   breadcrumbsTypography: {
+    fontFamily: ["Jua", '"sans-serif"'],
     fontSize: 12,
   },
   typography: {
@@ -141,12 +145,16 @@ const useStyles = makeStyles((theme) => ({
     alignItems: "center",
     justifyContent: "center",
   },
+  realRoot: {
+    display: "flex",
+    flexDirection: "column",
+    minHeight: "100vh",
+  },
   paper: {
     "@media (min-width: 600px)": {
-      width: "80%",
+      width: "70%",
     },
     width: "95%",
-    height: "70%",
     backgroundColor: theme.palette.background.paper,
     borderRadius: "4px",
     boxShadow: theme.shadows[5],
@@ -173,6 +181,7 @@ const AddCamp = () => {
     { facility: "", location: "" },
   ]);
   const [snackBar, setSnackBar] = React.useState(false);
+  const [pendingCamps, setPendingCamps] = React.useState([]);
 
   const handleAddFields = () => {
     setInputFields((oldArray) => [...oldArray, { facility: "", location: "" }]);
@@ -193,7 +202,7 @@ const AddCamp = () => {
     setInputFields(values);
   };
 
-  const addCamp = () => {
+  const addCamp = async () => {
     setOpenProgress(true);
     setCampNameError("");
     for (let i = 0; i < inputFields.length; i++) {
@@ -222,11 +231,55 @@ const AddCamp = () => {
         setFacilityError(values);
       }
     }
+
+    for (let i = 0; i < inputFields.length; i++) {
+      const db = app.firestore();
+      // await db
+      //   .collection("pendingApproval")
+      //   .doc(campName)
+      //   .set({ description: "부대에 관한 설명" });
+      // await db
+      //   .collection("pendingApproval")
+      //   .doc(campName)
+      //   .collection("facility")
+      //   .doc(inputFields[i].facility)
+      //   .set({ location: inputFields[i].location });
+
+      await db
+        .collection("users")
+        .doc(authUserId)
+        .collection("pendingApprovalCamp")
+        .doc(campName)
+        .set({ description: "부대에 관한 설명" });
+      await db
+        .collection("users")
+        .doc(authUserId)
+        .collection("pendingApprovalCamp")
+        .doc(campName)
+        .collection("facility")
+        .doc(inputFields[i].facility)
+        .set({ location: inputFields[i].location });
+    }
+
+    setPendingCamps([]);
+    app
+      .firestore()
+      .collection("users")
+      .doc(authUserId)
+      .collection("pendingApprovalCamp")
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setPendingCamps((oldArray) => [...oldArray, doc.id]);
+        });
+      });
+
     setSnackBar(true);
     setTimeout(() => {
       handleClose();
-    }, 1000);
+    }, 1500);
   };
+
   const handleClose = () => {
     setOpen(false);
     setInputFields([{ facility: "", location: "" }]);
@@ -240,36 +293,43 @@ const AddCamp = () => {
   };
 
   React.useEffect(() => {
-    app.auth().onAuthStateChanged((user) => {
-      app
-        .firestore()
-        .collection("users")
-        .where("uid", "==", user.uid)
-        .get()
-        .then((snapshot) => {
-          snapshot.forEach((doc) => {
-            setAuthUserId(doc.id);
-            app
-              .firestore()
-              .collection("users")
-              .doc(doc.id)
-              .collection("camp")
-              .get()
-              .then((snapshot) => {
-                snapshot.forEach((doc) => {
-                  setCamps((oldArray) => [...oldArray, doc.id]);
+    app.auth().onAuthStateChanged(async (user) => {
+      if (user) {
+        await app
+          .firestore()
+          .collection("users")
+          .where("uid", "==", user.uid)
+          .get()
+          .then((snapshot) => {
+            snapshot.forEach((doc) => {
+              setAuthUserId(doc.id);
+              app
+                .firestore()
+                .collection("users")
+                .doc(doc.id)
+                .collection("camp")
+                .get()
+                .then((snapshot) => {
+                  snapshot.forEach((doc) => {
+                    setCamps((oldArray) => [...oldArray, doc.id]);
+                  });
                 });
-              });
+            });
           });
-        });
+
+        await app
+          .firestore()
+          .collection("pendingApproval")
+          .where("uid", "==", user.uid)
+          .get()
+          .then((snapshot) => {
+            snapshot.forEach(async (doc) => {
+              setPendingCamps((oldArray) => [...oldArray, doc.id]);
+            });
+          });
+      }
     });
   }, []);
-
-  function handleClick(event) {
-    console.log(camps);
-    event.preventDefault();
-    console.info("You clicked a breadcrumb.");
-  }
 
   const showFacility = (camp) => {
     setCamps([]);
@@ -289,42 +349,41 @@ const AddCamp = () => {
   };
   return (
     <React.Fragment>
-      <CssBaseline />
-      <main>
-        <Breadcrumbs
-          className={classes.breadcrumbs}
-          // separator={<NavigateNextIcon fontSize="small" />}
-          aria-label="breadcrumb"
-        >
-          <Link color="inherit" href="/" onClick={handleClick}>
-            HOME
-          </Link>
-          <Typography
-            color="textPrimary"
-            className={classes.breadcrumbsTypography}
-          >
-            관리자페이지
-          </Typography>
-          <Typography
-            color="textPrimary"
-            className={classes.breadcrumbsTypography}
-          >
-            부대 관리
-          </Typography>
-        </Breadcrumbs>
-        <div className={classes.heroContent}>
-          <Container maxWidth="sm">
+      <div className={classes.realRoot}>
+        <CssBaseline />
+        <main>
+          <Breadcrumbs className={classes.breadcrumbs}>
             <Typography
-              component="h1"
-              variant="h2"
-              align="center"
               color="textPrimary"
-              className={classes.typography}
+              className={classes.breadcrumbsTypography}
+            >
+              HOME
+            </Typography>
+            <Typography
+              color="textPrimary"
+              className={classes.breadcrumbsTypography}
+            >
+              관리자페이지
+            </Typography>
+            <Typography
+              color="textPrimary"
+              className={classes.breadcrumbsTypography}
             >
               부대 관리
             </Typography>
-            <Typography
-              variant="h5"
+          </Breadcrumbs>
+          <div className={classes.heroContent}>
+            <Container maxWidth="sm">
+              <Typography
+                variant="h4"
+                align="center"
+                color="textPrimary"
+                className={classes.typography}
+              >
+                부대 관리
+              </Typography>
+              {/* <Typography
+              variant="h6"
               align="center"
               color="textSecondary"
               paragraph
@@ -333,288 +392,471 @@ const AddCamp = () => {
               기존의 관리자가 추가한 부대와 추가하고 싶은 부대가 있다면 아래
               플러스 버튼을 이용하여 추가하싶시오. 추가이후에 총괄관리자가
               승인을 해주면 해당 체육시설을 예약 이용할 수 있습니다.
-            </Typography>
-            <div className={classes.heroButtons}>
-              <Grid container spacing={2} justify="center">
-                <BottomNavigation
-                  value={value}
-                  onChange={(event, newValue) => {
-                    setValue(newValue);
-                  }}
-                  showLabels
-                  className={classes.root}
-                >
-                  <BottomNavigationAction
-                    classes={{
-                      label: classes.navigationStyle,
-                      selected: classes.navigationSelected,
+            </Typography> */}
+              <div className={classes.heroButtons}>
+                <Grid container spacing={2} justify="center">
+                  <BottomNavigation
+                    value={value}
+                    onChange={(event, newValue) => {
+                      setValue(newValue);
                     }}
-                    label="내가 추가한 부대"
-                    value="1"
-                    icon={<AddToQueueIcon />}
-                  />
-                  <BottomNavigationAction
-                    classes={{
-                      label: classes.navigationStyle,
-                      selected: classes.navigationSelected,
-                    }}
-                    label="승인 대기중인 부대"
-                    value="2"
-                    icon={<HourglassEmptyIcon />}
-                  />
-                </BottomNavigation>
-              </Grid>
-            </div>
-          </Container>
-        </div>
-        {value === "1" ? (
-          <Container className={classes.cardGrid} maxWidth="md">
-            {/* End hero unit */}
-            <Grid container spacing={4}>
-              {camps.map((camp) => (
-                <Grid item key={camp} xs={12} sm={6} md={4}>
+                    showLabels
+                    className={classes.root}
+                  >
+                    <BottomNavigationAction
+                      classes={{
+                        label: classes.navigationStyle,
+                        selected: classes.navigationSelected,
+                      }}
+                      label="내가 추가한 부대"
+                      value="1"
+                      icon={<AddToQueueIcon />}
+                    />
+                    <BottomNavigationAction
+                      classes={{
+                        label: classes.navigationStyle,
+                        selected: classes.navigationSelected,
+                      }}
+                      label="승인 대기중인 부대"
+                      value="2"
+                      icon={<HourglassEmptyIcon />}
+                    />
+                  </BottomNavigation>
+                </Grid>
+              </div>
+            </Container>
+          </div>
+          {value === "1" ? (
+            <Container className={classes.cardGrid} maxWidth="md">
+              <Grid container spacing={4}>
+                {camps.map((camp) => (
+                  <Grid item key={camp} xs={12} sm={6} md={4}>
+                    <Card className={classes.card}>
+                      <CardContent className={classes.cardContent}>
+                        <Typography variant="h5" component="h2">
+                          {camp}
+                        </Typography>
+                      </CardContent>
+                      <CardActions className={classes.cardButton}>
+                        <Button
+                          value={camp}
+                          color="primary"
+                          onClick={() => showFacility(camp)}
+                        >
+                          자세히
+                        </Button>
+                        <Button color="primary">수정</Button>
+                      </CardActions>
+                    </Card>
+                  </Grid>
+                ))}
+
+                <Grid item key="addCamp" xs={12} sm={6} md={4}>
                   <Card className={classes.card}>
-                    <CardContent className={classes.cardContent}>
-                      <Typography variant="h5" component="h2">
-                        {camp}
-                      </Typography>
-                      {/* <Typography>
-                      This is a media card. You can use this section to describe
-                      the content.
-                    </Typography> */}
-                    </CardContent>
-                    <CardActions className={classes.cardButton}>
+                    <CardContent className={classes.cardContent} id="check">
                       <Button
-                        value={camp}
                         color="primary"
-                        onClick={() => showFacility(camp)}
+                        onClick={() => {
+                          setOpen(true);
+                        }}
                       >
-                        자세히
+                        <AddIcon fontSize="large" />
                       </Button>
-                      <Button color="primary">수정</Button>
-                    </CardActions>
+                      <Modal
+                        aria-labelledby="transition-modal-title"
+                        aria-describedby="transition-modal-description"
+                        className={classes.modal}
+                        open={open}
+                        onClose={handleClose}
+                        closeAfterTransition
+                        BackdropComponent={Backdrop}
+                        BackdropProps={{
+                          timeout: 500,
+                        }}
+                      >
+                        <Slide direction="up" in={open}>
+                          <div className={classes.paper}>
+                            <Container component="main" maxWidth="md">
+                              <Typography className={classes.modalTypography}>
+                                부대 추가하기
+                              </Typography>
+                              <TableContainer
+                                component={Paper}
+                                className={classes.tableContainer}
+                              >
+                                <Table aria-label="simple table">
+                                  <TableBody>
+                                    <TableRow key="campName">
+                                      <TableCell
+                                        component="th"
+                                        scope="row"
+                                        className={classes.tableRow}
+                                      >
+                                        부대명
+                                      </TableCell>
+                                      <th>
+                                        <FormControl
+                                          fullWidth
+                                          error={
+                                            campNameError === "" ? false : true
+                                          }
+                                        >
+                                          <Input
+                                            value={campName}
+                                            onChange={({ target: { value } }) =>
+                                              setCampName(value)
+                                            }
+                                            type="text"
+                                            className={classes.textField}
+                                            aria-describedby="standard-weight-helper-text"
+                                            inputProps={{
+                                              "aria-label": "weight",
+                                            }}
+                                            placeholder="부대명을 입력해주십시오."
+                                          />
+                                        </FormControl>
+                                      </th>
+                                    </TableRow>
+
+                                    {inputFields.map((input, index) => (
+                                      <React.Fragment key={`${input}~${index}`}>
+                                        <TableRow key={index}>
+                                          <TableCell
+                                            component="th"
+                                            scope="row"
+                                            className={classes.tableRow}
+                                          >
+                                            체육시설
+                                          </TableCell>
+                                          <th>
+                                            <FormControl
+                                              fullWidth
+                                              error={
+                                                facilityError[index]
+                                                  .facility === ""
+                                                  ? false
+                                                  : true
+                                              }
+                                            >
+                                              <Input
+                                                value={input.facility || ""}
+                                                onChange={({
+                                                  target: { value },
+                                                }) =>
+                                                  handleInputChange(
+                                                    index,
+                                                    value,
+                                                    0
+                                                  )
+                                                }
+                                                type="text"
+                                                className={classes.textField}
+                                                placeholder="체육시설을 입력해주십시오."
+                                              />
+                                            </FormControl>
+                                            <FormControl
+                                              fullWidth
+                                              error={
+                                                facilityError[index]
+                                                  .location === ""
+                                                  ? false
+                                                  : true
+                                              }
+                                            >
+                                              <Input
+                                                value={input.location || ""}
+                                                onChange={({
+                                                  target: { value },
+                                                }) =>
+                                                  handleInputChange(
+                                                    index,
+                                                    value,
+                                                    1
+                                                  )
+                                                }
+                                                type="text"
+                                                className={classes.textField}
+                                                placeholder="위치를 입력해주십시오."
+                                              />
+                                            </FormControl>
+                                          </th>
+                                          <th>
+                                            <IndeterminateCheckBoxIcon
+                                              onClick={() =>
+                                                handleRemoveFields(index)
+                                              }
+                                              style={{
+                                                cursor: "pointer",
+                                                color: "orangered",
+                                              }}
+                                            />
+                                          </th>
+                                        </TableRow>
+                                      </React.Fragment>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </TableContainer>
+
+                              <span className={classes.buttons}>
+                                <Button
+                                  variant="contained"
+                                  className={classes.button}
+                                  onClick={handleAddFields}
+                                >
+                                  체육시설 추가하기
+                                </Button>
+
+                                <span>
+                                  <Button
+                                    onClick={addCamp}
+                                    variant="contained"
+                                    color="primary"
+                                    className={classes.button}
+                                  >
+                                    추가
+                                  </Button>
+                                  <Backdrop
+                                    className={classes.backdrop}
+                                    open={openProgress}
+                                  >
+                                    <CircularProgress color="inherit" />
+                                  </Backdrop>
+                                  <Snackbar
+                                    autoHideDuration={2000}
+                                    open={snackBar}
+                                    onClose={() => setSnackBar(false)}
+                                    TransitionComponent={Slide}
+                                    message="부대를 추가하였습니다. 관리자의 승인을 기다립니다."
+                                  />
+                                  <Button
+                                    onClick={handleClose}
+                                    variant="contained"
+                                    color="secondary"
+                                    className={classes.button}
+                                  >
+                                    닫기
+                                  </Button>
+                                </span>
+                              </span>
+                            </Container>
+                          </div>
+                        </Slide>
+                      </Modal>
+                    </CardContent>
                   </Card>
                 </Grid>
-              ))}
+              </Grid>
+            </Container>
+          ) : (
+            <Container className={classes.cardGrid} maxWidth="md">
+              <Grid container spacing={4}>
+                {pendingCamps.map((camp) => (
+                  <Grid item key={camp} xs={12} sm={6} md={4}>
+                    <Card className={classes.card}>
+                      <CardContent className={classes.cardContent}>
+                        <Typography variant="h5" component="h2">
+                          {camp}
+                        </Typography>
+                      </CardContent>
+                      <CardActions className={classes.cardButton}>
+                        <Button
+                          value={camp}
+                          color="primary"
+                          onClick={() => showFacility(camp)}
+                        >
+                          자세히
+                        </Button>
+                        <Button color="primary">수정</Button>
+                      </CardActions>
+                    </Card>
+                  </Grid>
+                ))}
+                <Modal
+                  aria-labelledby="transition-modal-title"
+                  aria-describedby="transition-modal-description"
+                  className={classes.modal}
+                  open={open}
+                  onClose={handleClose}
+                  closeAfterTransition
+                  BackdropComponent={Backdrop}
+                  BackdropProps={{
+                    timeout: 500,
+                  }}
+                >
+                  <Slide direction="up" in={open}>
+                    <div className={classes.paper}>
+                      <Container component="main" maxWidth="md">
+                        <Typography className={classes.modalTypography}>
+                          부대 추가하기
+                        </Typography>
+                        <TableContainer
+                          component={Paper}
+                          className={classes.tableContainer}
+                        >
+                          <Table aria-label="simple table">
+                            <TableBody>
+                              <TableRow key="campName">
+                                <TableCell
+                                  component="th"
+                                  scope="row"
+                                  className={classes.tableRow}
+                                >
+                                  부대명
+                                </TableCell>
+                                <th>
+                                  <FormControl
+                                    fullWidth
+                                    error={campNameError === "" ? false : true}
+                                  >
+                                    <Input
+                                      value={campName}
+                                      onChange={({ target: { value } }) =>
+                                        setCampName(value)
+                                      }
+                                      type="text"
+                                      className={classes.textField}
+                                      aria-describedby="standard-weight-helper-text"
+                                      inputProps={{
+                                        "aria-label": "weight",
+                                      }}
+                                      placeholder="부대명을 입력해주십시오."
+                                    />
+                                  </FormControl>
+                                </th>
+                              </TableRow>
 
-              <Grid item key="addCamp" xs={12} sm={6} md={4}>
-                <Card className={classes.card}>
-                  <CardContent className={classes.cardContent} id="check">
-                    <Button
-                      color="primary"
-                      onClick={() => {
-                        setOpen(true);
-                      }}
-                    >
-                      <AddIcon fontSize="large" />
-                    </Button>
-                    <Modal
-                      aria-labelledby="transition-modal-title"
-                      aria-describedby="transition-modal-description"
-                      className={classes.modal}
-                      open={open}
-                      onClose={handleClose}
-                      closeAfterTransition
-                      BackdropComponent={Backdrop}
-                      BackdropProps={{
-                        timeout: 500,
-                      }}
-                    >
-                      <Slide direction="up" in={open}>
-                        <div className={classes.paper}>
-                          <Container component="main" maxWidth="md">
-                            <Typography className={classes.modalTypography}>
-                              부대 추가하기
-                            </Typography>
-                            <TableContainer
-                              component={Paper}
-                              className={classes.tableContainer}
-                            >
-                              <Table aria-label="simple table">
-                                <TableBody>
-                                  <TableRow key="campName">
+                              {inputFields.map((input, index) => (
+                                <React.Fragment key={`${input}~${index}`}>
+                                  <TableRow key={index}>
                                     <TableCell
                                       component="th"
                                       scope="row"
                                       className={classes.tableRow}
                                     >
-                                      부대명
+                                      체육시설
                                     </TableCell>
                                     <th>
                                       <FormControl
                                         fullWidth
                                         error={
-                                          campNameError === "" ? false : true
+                                          facilityError[index].facility === ""
+                                            ? false
+                                            : true
                                         }
                                       >
                                         <Input
-                                          value={campName}
+                                          value={input.facility || ""}
                                           onChange={({ target: { value } }) =>
-                                            setCampName(value)
+                                            handleInputChange(index, value, 0)
                                           }
                                           type="text"
                                           className={classes.textField}
-                                          aria-describedby="standard-weight-helper-text"
-                                          inputProps={{
-                                            "aria-label": "weight",
-                                          }}
-                                          placeholder="부대명을 입력해주십시오."
+                                          placeholder="체육시설을 입력해주십시오."
+                                        />
+                                      </FormControl>
+                                      <FormControl
+                                        fullWidth
+                                        error={
+                                          facilityError[index].location === ""
+                                            ? false
+                                            : true
+                                        }
+                                      >
+                                        <Input
+                                          value={input.location || ""}
+                                          onChange={({ target: { value } }) =>
+                                            handleInputChange(index, value, 1)
+                                          }
+                                          type="text"
+                                          className={classes.textField}
+                                          placeholder="위치를 입력해주십시오."
                                         />
                                       </FormControl>
                                     </th>
+                                    <th>
+                                      <IndeterminateCheckBoxIcon
+                                        onClick={() =>
+                                          handleRemoveFields(index)
+                                        }
+                                        style={{
+                                          cursor: "pointer",
+                                          color: "orangered",
+                                        }}
+                                      />
+                                    </th>
                                   </TableRow>
+                                </React.Fragment>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
 
-                                  {inputFields.map((input, index) => (
-                                    <React.Fragment key={`${input}~${index}`}>
-                                      <TableRow key={index}>
-                                        <TableCell
-                                          component="th"
-                                          scope="row"
-                                          className={classes.tableRow}
-                                        >
-                                          체육시설
-                                        </TableCell>
-                                        <th>
-                                          <FormControl
-                                            fullWidth
-                                            error={
-                                              facilityError[index].facility ===
-                                              ""
-                                                ? false
-                                                : true
-                                            }
-                                          >
-                                            <Input
-                                              value={input.facility || ""}
-                                              onChange={({
-                                                target: { value },
-                                              }) =>
-                                                handleInputChange(
-                                                  index,
-                                                  value,
-                                                  0
-                                                )
-                                              }
-                                              type="text"
-                                              className={classes.textField}
-                                              placeholder="체육시설을 입력해주십시오."
-                                            />
-                                          </FormControl>
-                                          <FormControl
-                                            fullWidth
-                                            error={
-                                              facilityError[index].location ===
-                                              ""
-                                                ? false
-                                                : true
-                                            }
-                                          >
-                                            <Input
-                                              value={input.location || ""}
-                                              onChange={({
-                                                target: { value },
-                                              }) =>
-                                                handleInputChange(
-                                                  index,
-                                                  value,
-                                                  1
-                                                )
-                                              }
-                                              type="text"
-                                              className={classes.textField}
-                                              placeholder="위치를 입력해주십시오."
-                                            />
-                                          </FormControl>
-                                        </th>
-                                        <th>
-                                          <IndeterminateCheckBoxIcon
-                                            onClick={() =>
-                                              handleRemoveFields(index)
-                                            }
-                                            style={{
-                                              cursor: "pointer",
-                                              color: "orangered",
-                                            }}
-                                          />
-                                        </th>
-                                      </TableRow>
-                                    </React.Fragment>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </TableContainer>
+                        <span className={classes.buttons}>
+                          <Button
+                            variant="contained"
+                            className={classes.button}
+                            onClick={handleAddFields}
+                          >
+                            체육시설 추가하기
+                          </Button>
 
-                            <span className={classes.buttons}>
-                              <Button
-                                variant="contained"
-                                className={classes.button}
-                                onClick={handleAddFields}
-                              >
-                                체육시설 추가하기
-                              </Button>
-
-                              <span>
-                                <Button
-                                  onClick={addCamp}
-                                  variant="contained"
-                                  color="primary"
-                                  className={classes.button}
-                                >
-                                  추가
-                                </Button>
-                                <Backdrop
-                                  className={classes.backdrop}
-                                  open={openProgress}
-                                >
-                                  <CircularProgress color="inherit" />
-                                </Backdrop>
-                                <Snackbar
-                                  autoHideDuration={2000}
-                                  open={snackBar}
-                                  onClose={() => setSnackBar(false)}
-                                  TransitionComponent={Slide}
-                                  message="부대를 추가하였습니다. 관리자의 승인을 기다립니다."
-                                />
-                                <Button
-                                  onClick={handleClose}
-                                  variant="contained"
-                                  color="secondary"
-                                  className={classes.button}
-                                >
-                                  닫기
-                                </Button>
-                              </span>
-                            </span>
-                          </Container>
-                        </div>
-                      </Slide>
-                    </Modal>
-                  </CardContent>
-                </Card>
+                          <span>
+                            <Button
+                              onClick={addCamp}
+                              variant="contained"
+                              color="primary"
+                              className={classes.button}
+                            >
+                              추가
+                            </Button>
+                            <Backdrop
+                              className={classes.backdrop}
+                              open={openProgress}
+                            >
+                              <CircularProgress color="inherit" />
+                            </Backdrop>
+                            <Snackbar
+                              autoHideDuration={2000}
+                              open={snackBar}
+                              onClose={() => setSnackBar(false)}
+                              TransitionComponent={Slide}
+                              message="부대를 추가하였습니다. 관리자의 승인을 기다립니다."
+                            />
+                            <Button
+                              onClick={handleClose}
+                              variant="contained"
+                              color="secondary"
+                              className={classes.button}
+                            >
+                              닫기
+                            </Button>
+                          </span>
+                        </span>
+                      </Container>
+                    </div>
+                  </Slide>
+                </Modal>
               </Grid>
-            </Grid>
-          </Container>
-        ) : (
-          <div>asd</div>
-        )}
-      </main>
+            </Container>
+          )}
+        </main>
 
-      {/* Footer */}
-      <footer className={classes.footer}>
-        <Typography variant="h6" align="center">
-          Footer
-        </Typography>
-        <Typography
-          variant="subtitle1"
-          align="center"
-          color="textSecondary"
-          component="p"
-        >
-          Something here to give the footer a purpose!
-        </Typography>
-        <Copyright />
-      </footer>
-      {/* End footer */}
+        <footer className={classes.footer}>
+          <Typography
+            variant="subtitle1"
+            align="center"
+            color="textSecondary"
+            component="p"
+            style={{
+              fontFamily: ["Jua", '"sans-serif"'],
+            }}
+          >
+            홈페이지 관련문의: 정영안 (T.010-9715-1508)
+          </Typography>
+          <Copyright />
+        </footer>
+      </div>
     </React.Fragment>
   );
 };
