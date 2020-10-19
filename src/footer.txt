@@ -15,21 +15,6 @@
       </div>
 
 
-const Copyright = () => {
-  return (
-    <Typography
-      variant="body2"
-      color="textSecondary"
-      align="center"
-      style={{
-        fontFamily: ["Jua", '"sans-serif"'],
-      }}
-    >
-      {"Copyright © 체육시설 예약체계 "} {new Date().getFullYear()}
-      {"."}
-    </Typography>
-  );
-};
         <footer className={classes.footer}>
           <Typography
             variant="subtitle1"
@@ -42,5 +27,15 @@ const Copyright = () => {
           >
             홈페이지 관련문의: 정영안 (T.010-9715-1508)
           </Typography>
-          <Copyright />
+             <Typography
+      variant="body2"
+      color="textSecondary"
+      align="center"
+      style={{
+        fontFamily: ["Jua", '"sans-serif"'],
+      }}
+    >
+      {"Copyright © 체육시설 예약체계 "} {new Date().getFullYear()}
+      {"."}
+    </Typography>
         </footer>

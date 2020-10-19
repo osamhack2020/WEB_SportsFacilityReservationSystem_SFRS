@@ -7,17 +7,10 @@ import CssBaseline from "@material-ui/core/CssBaseline";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
-import Container from "@material-ui/core/Container";
-import Link from "@material-ui/core/Link";
 import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import app from "./firebase";
 import Modal from "@material-ui/core/Modal";
 import Backdrop from "@material-ui/core/Backdrop";
-import Slide from "@material-ui/core/Slide";
-import TableBody from "@material-ui/core/TableBody";
-import TableCell from "@material-ui/core/TableCell";
-import TableContainer from "@material-ui/core/TableContainer";
-import TableRow from "@material-ui/core/TableRow";
 import Table from "@material-ui/core/Table";
 import Paper from "@material-ui/core/Paper";
 import CircularProgress from "@material-ui/core/CircularProgress";
@@ -26,27 +19,17 @@ import BottomNavigation from "@material-ui/core/BottomNavigation";
 import BottomNavigationAction from "@material-ui/core/BottomNavigationAction";
 import HourglassEmptyIcon from "@material-ui/icons/HourglassEmpty";
 import AddToQueueIcon from "@material-ui/icons/AddToQueue";
-
-const Copyright = () => {
-  return (
-    <Typography
-      variant="body2"
-      color="textSecondary"
-      align="center"
-      style={{
-        fontFamily: ["Jua", '"sans-serif"'],
-      }}
-    >
-      {"Copyright © 체육시설 예약체계 "} {new Date().getFullYear()}
-      {"."}
-    </Typography>
-  );
-};
+import Slide from "@material-ui/core/Slide";
+import Container from "@material-ui/core/Container";
+import TableCell from "@material-ui/core/TableCell";
+import TableRow from "@material-ui/core/TableRow";
+import TableBody from "@material-ui/core/TableBody";
+import TableContainer from "@material-ui/core/TableContainer";
 
 const useStyles = makeStyles((theme) => ({
   heroContent: {
     backgroundColor: theme.palette.background.paper,
-    padding: theme.spacing(4, 0, 6),
+    padding: theme.spacing(3, 0, 6),
   },
   root: {
     width: 500,
@@ -181,49 +164,23 @@ const AddCamp = () => {
   const [open, setOpen] = React.useState(false);
   const [openProgress, setOpenProgress] = React.useState(false);
   const [snackBar, setSnackBar] = React.useState(false);
-  const [userId, setUserId] = React.useState("");
 
   const approveCamp = async () => {
-    setOpenProgress(true);
+    const db = app.firestore();
 
+    setOpenProgress(true);
     setTimeout(() => {
       setOpenProgress(false);
     }, 500);
 
+    await db
+      .collection("camp")
+      .doc(requestedCamp)
+      .set({ uid: requestedFacility[0].uid });
+
     for (let i = 0; i < requestedFacility.length; i++) {
-      const db = app.firestore();
-      await db
-        .collection("camp")
-        .doc(requestedCamp)
-        .set({ description: "부대에 관한 설명" });
-
-      await db
-        .collection("users")
-        .where("uid", "==", userId)
-        .get()
-        .then((snapshot) => {
-          snapshot.forEach(async (doc) => {
-            await app
-              .firestore()
-              .collection("users")
-              .doc(doc.id)
-              .collection("camp")
-              .doc(requestedCamp)
-              .set({ description: "부대에 관한 설명" });
-
-            await app
-              .firestore()
-              .collection("users")
-              .doc(doc.id)
-              .collection("camp")
-              .doc(requestedCamp)
-              .collection("facility")
-              .doc(requestedFacility[i].facility)
-              .set({ location: requestedFacility[i].location });
-          });
-        });
-
-      await db
+      await app
+        .firestore()
         .collection("camp")
         .doc(requestedCamp)
         .collection("facility")
@@ -231,15 +188,10 @@ const AddCamp = () => {
         .set({ location: requestedFacility[i].location });
     }
 
-    await app
-      .firestore()
-      .collection("pendingApproval")
-      .doc(requestedCamp)
-      .delete();
+    await db.collection("pendingApproval").doc(requestedCamp).delete();
 
     setCamps([]);
-    await app
-      .firestore()
+    await db
       .collection("pendingApproval")
       .get()
       .then((snapshot) => {
@@ -251,7 +203,7 @@ const AddCamp = () => {
     setSnackBar(true);
     setTimeout(() => {
       handleClose();
-    }, 2000);
+    }, 1700);
   };
 
   const handleClose = () => {
@@ -263,42 +215,34 @@ const AddCamp = () => {
 
   React.useEffect(() => {
     app.auth().onAuthStateChanged((user) => {
-      setUserId(user.uid);
       app
         .firestore()
-        .collectionGroup("pendingApprovalCamp")
+        .collection("pendingApproval")
         .get()
         .then((snapshot) => {
           snapshot.forEach((doc) => {
-            setCamps((oldArray) => [...oldArray, doc.id]);
+            setCamps((oldArray) => [
+              ...oldArray,
+              { camp: doc.id, uid: doc.data().uid },
+            ]);
           });
         });
-
-      // app
-      //   .firestore()
-      //   .collection("pendingApproval")
-      //   .get()
-      //   .then((snapshot) => {
-      //     snapshot.forEach((doc) => {
-      //       setCamps((oldArray) => [...oldArray, doc.id]);
-      //     });
-      //   });
     });
   }, []);
 
   const showFacility = (camp) => {
-    setRequestedCamp(camp);
+    setRequestedCamp(camp.camp);
     app
       .firestore()
       .collection("pendingApproval")
-      .doc(camp)
+      .doc(camp.camp)
       .collection("facility")
       .get()
       .then((snapshot) => {
         snapshot.forEach((doc) => {
           setRequestedFacility((oldArray) => [
             ...oldArray,
-            { facility: doc.id, location: doc.data().location },
+            { facility: doc.id, location: doc.data().location, uid: camp.uid },
           ]);
         });
       });
@@ -310,7 +254,7 @@ const AddCamp = () => {
       <div className={classes.realRoot}>
         <CssBaseline />
         <main>
-          <Breadcrumbs className={classes.breadcrumbs} aria-label="breadcrumb">
+          <Breadcrumbs className={classes.breadcrumbs}>
             <Typography
               color="textPrimary"
               className={classes.breadcrumbsTypography}
@@ -333,14 +277,14 @@ const AddCamp = () => {
           <div className={classes.heroContent}>
             <Container maxWidth="sm">
               <Typography
-                variant="h3"
+                variant="h4"
                 align="center"
                 color="textPrimary"
                 className={classes.typography}
               >
                 관리자 승인
               </Typography>
-              <Typography
+              {/* <Typography
                 variant="h6"
                 align="center"
                 color="textSecondary"
@@ -350,7 +294,7 @@ const AddCamp = () => {
                 각 부대관리자들이 추가한 부대들을 승인 또는 거절할 수 있습니다.
                 관리자들이 신청한 부대를 승인한다면 실제 사용자들이 바로 예약을
                 진행할 수 있습니다.
-              </Typography>
+              </Typography> */}
               <div className={classes.heroButtons}>
                 <Grid container spacing={2} justify="center">
                   <BottomNavigation
@@ -393,22 +337,25 @@ const AddCamp = () => {
                   </Typography>
                 ) : (
                   camps.map((camp) => (
-                    <Grid item key={camp} xs={12} sm={6} md={4}>
+                    <Grid item key={camp.camp} xs={12} sm={6} md={4}>
                       <Card className={classes.card}>
                         <CardContent className={classes.cardContent}>
-                          <Typography variant="h5" component="h2">
-                            {camp}
+                          <Typography
+                            variant="h5"
+                            component="h2"
+                            className={classes.typography}
+                          >
+                            {camp.camp}
                           </Typography>
                         </CardContent>
                         <CardActions className={classes.cardButton}>
                           <Button
-                            value={camp}
+                            value={camp.camp}
                             color="primary"
                             onClick={() => showFacility(camp)}
                           >
-                            자세히
+                            승인 / 미승인
                           </Button>
-                          <Button color="primary">수정</Button>
                         </CardActions>
                       </Card>
                     </Grid>
@@ -416,8 +363,6 @@ const AddCamp = () => {
                 )}
 
                 <Modal
-                  aria-labelledby="transition-modal-title"
-                  aria-describedby="transition-modal-description"
                   className={classes.modal}
                   open={open}
                   onClose={handleClose}
@@ -437,7 +382,7 @@ const AddCamp = () => {
                           component={Paper}
                           className={classes.tableContainer}
                         >
-                          <Table aria-label="simple table">
+                          <Table>
                             <TableBody>
                               <TableRow key="campName">
                                 <TableCell
@@ -499,6 +444,14 @@ const AddCamp = () => {
                             >
                               승인
                             </Button>
+                            <Button
+                              onClick={approveCamp}
+                              variant="contained"
+                              // color="primary"
+                              className={classes.button}
+                            >
+                              미승인
+                            </Button>
                             <Backdrop
                               className={classes.backdrop}
                               open={openProgress}
@@ -544,7 +497,17 @@ const AddCamp = () => {
           >
             홈페이지 관련문의: 정영안 (T.010-9715-1508)
           </Typography>
-          <Copyright />
+          <Typography
+            variant="body2"
+            color="textSecondary"
+            align="center"
+            style={{
+              fontFamily: ["Jua", '"sans-serif"'],
+            }}
+          >
+            {"Copyright © 체육시설 예약체계 "} {new Date().getFullYear()}
+            {"."}
+          </Typography>
         </footer>
       </div>
     </React.Fragment>

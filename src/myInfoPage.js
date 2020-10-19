@@ -224,7 +224,7 @@ const MyInfoPage = () => {
       {value === "1" ? (
         <Container component="main" maxWidth="md">
           <TableContainer component={Paper}>
-            <Table aria-label="simple table">
+            <Table>
               <TableBody>
                 <TableRow key="name">
                   <TableCell
@@ -271,8 +271,6 @@ const MyInfoPage = () => {
                         onChange={({ target: { value } }) => setPassword(value)}
                         type="password"
                         className={classes.textField}
-                        aria-describedby="standard-weight-helper-text"
-                        inputProps={{ "aria-label": "weight" }}
                         placeholder="비밀번호를 입력해주세요."
                       />
                     </FormControl>

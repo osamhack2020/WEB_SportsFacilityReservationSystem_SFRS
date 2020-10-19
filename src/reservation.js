@@ -194,7 +194,7 @@ export default function Checkout() {
                   <Box boxShadow={1}>
                     <Typography className={classes.table} variant="subtitle1">
                       <TableContainer component={Paper}>
-                        <Table aria-label="simple table">
+                        <Table>
                           <TableHead>
                             <TableRow>
                               <TableCell>부대</TableCell>

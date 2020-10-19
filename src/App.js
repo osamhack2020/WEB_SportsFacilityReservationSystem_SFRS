@@ -6,6 +6,7 @@ import User from "./fontawesome/user";
 import Login from "./fontawesome/login";
 import Logout from "./fontawesome/logout";
 import PrivateRoute from "./privateRoute";
+import Typography from "@material-ui/core/Typography";
 import SignUp from "./signUp";
 import SignIn from "./signIn";
 import MyInfoPage from "./myInfoPage";
@@ -31,7 +32,7 @@ import {
   NavLink,
 } from "react-router-dom";
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles((theme) => ({
   container: {
     zIndex: "12",
     color: "#FFFFFF",
@@ -63,6 +64,16 @@ const useStyles = makeStyles(() => ({
     minHeight: "32px",
     color: "#FFFFFF",
     textDecoration: "none",
+  },
+  footer: {
+    backgroundColor: theme.palette.background.paper,
+    padding: theme.spacing(3, 2),
+    marginTop: "auto",
+  },
+  realRoot: {
+    display: "flex",
+    flexDirection: "column",
+    minHeight: "100vh",
   },
 }));
 
@@ -244,22 +255,48 @@ const App = () => {
 
         <Switch>
           <Route exact path="/">
-            <BackgroundImage filter image={require("./assets/bg.jpg")}>
-              <div className={classes.container}>
-                <GridContainer>
-                  <GridItem xs={12} sm={12} md={6}>
-                    <h1 className={classes.title}>
-                      국군장병들의 건강한 체육활동을 위하여
-                    </h1>
-                    <h4>
-                      간부 병 상관없이 누구나 확률적으로 즐길수있는 공정한
-                      체육시설예약체계 각 부대에서 있는 체육대회에도 많은 관심
-                      부탁드립니다.
-                    </h4>
-                  </GridItem>
-                </GridContainer>
-              </div>
-            </BackgroundImage>
+            <div className={classes.realRoot}>
+              <BackgroundImage filter image={require("./assets/bg.jpg")}>
+                <div className={classes.container}>
+                  <GridContainer>
+                    <GridItem xs={12} sm={12} md={6}>
+                      <h1 className={classes.title}>
+                        국군장병들의 건강한 체육활동을 위하여
+                      </h1>
+                      <h4>
+                        간부 병 상관없이 누구나 확률적으로 즐길수있는 공정한
+                        체육시설예약체계 각 부대에서 있는 체육대회에도 많은 관심
+                        부탁드립니다.
+                      </h4>
+                    </GridItem>
+                  </GridContainer>
+                </div>
+              </BackgroundImage>
+              <footer className={classes.footer}>
+                <Typography
+                  variant="subtitle1"
+                  align="center"
+                  color="textSecondary"
+                  component="p"
+                  style={{
+                    fontFamily: ["Jua", '"sans-serif"'],
+                  }}
+                >
+                  홈페이지 관련문의: 정영안 (T.010-9715-1508)
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="textSecondary"
+                  align="center"
+                  style={{
+                    fontFamily: ["Jua", '"sans-serif"'],
+                  }}
+                >
+                  {"Copyright © 체육시설 예약체계 "} {new Date().getFullYear()}
+                  {"."}
+                </Typography>
+              </footer>
+            </div>
           </Route>
 
           <PrivateRoute path="/reservation" component={Reservation} />

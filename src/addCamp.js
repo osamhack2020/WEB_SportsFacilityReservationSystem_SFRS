@@ -30,26 +30,10 @@ import BottomNavigationAction from "@material-ui/core/BottomNavigationAction";
 import HourglassEmptyIcon from "@material-ui/icons/HourglassEmpty";
 import AddToQueueIcon from "@material-ui/icons/AddToQueue";
 
-const Copyright = () => {
-  return (
-    <Typography
-      variant="body2"
-      color="textSecondary"
-      align="center"
-      style={{
-        fontFamily: ["Jua", '"sans-serif"'],
-      }}
-    >
-      {"Copyright © 체육시설 예약체계 "} {new Date().getFullYear()}
-      {"."}
-    </Typography>
-  );
-};
-
 const useStyles = makeStyles((theme) => ({
   heroContent: {
     backgroundColor: theme.palette.background.paper,
-    padding: theme.spacing(4, 0, 6),
+    padding: theme.spacing(3, 0, 6),
   },
   root: {
     width: 500,
@@ -91,6 +75,10 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     justifyContent: "space-between",
   },
+  modalButtons: {
+    display: "flex",
+    justifyContent: "flex-end",
+  },
   textField: {
     fontFamily: ["Jua", '"sans-serif"'],
     marginTop: theme.spacing(0),
@@ -99,6 +87,11 @@ const useStyles = makeStyles((theme) => ({
     padding: "3%",
     paddingLeft: "5%",
     width: "100%",
+  },
+  tableCell: {
+    fontSize: 16,
+    fontFamily: ["Jua", '"sans-serif"'],
+    paddingLeft: "5%",
   },
   tableRow: {
     fontSize: 16,
@@ -128,6 +121,11 @@ const useStyles = makeStyles((theme) => ({
     fontSize: 12,
   },
   typography: {
+    fontFamily: ["Jua", '"sans-serif"'],
+  },
+  noPending: {
+    paddingLeft: "5%",
+    fontSize: "18px",
     fontFamily: ["Jua", '"sans-serif"'],
   },
   modalTypography: {
@@ -169,7 +167,9 @@ const AddCamp = () => {
   const classes = useStyles();
   const [value, setValue] = React.useState("1");
   const [camps, setCamps] = React.useState([]);
+  const [selectedMyCamp, setSelectedMyCamp] = React.useState([]);
   const [authUserId, setAuthUserId] = React.useState("");
+  const [openModal, setOpenModal] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const [openProgress, setOpenProgress] = React.useState(false);
   const [campName, setCampName] = React.useState("");
@@ -232,47 +232,23 @@ const AddCamp = () => {
       }
     }
 
-    for (let i = 0; i < inputFields.length; i++) {
-      const db = app.firestore();
-      // await db
-      //   .collection("pendingApproval")
-      //   .doc(campName)
-      //   .set({ description: "부대에 관한 설명" });
-      // await db
-      //   .collection("pendingApproval")
-      //   .doc(campName)
-      //   .collection("facility")
-      //   .doc(inputFields[i].facility)
-      //   .set({ location: inputFields[i].location });
+    await app
+      .firestore()
+      .collection("pendingApproval")
+      .doc(campName)
+      .set({ uid: authUserId });
 
-      await db
-        .collection("users")
-        .doc(authUserId)
-        .collection("pendingApprovalCamp")
-        .doc(campName)
-        .set({ description: "부대에 관한 설명" });
-      await db
-        .collection("users")
-        .doc(authUserId)
-        .collection("pendingApprovalCamp")
+    for (let i = 0; i < inputFields.length; i++) {
+      await app
+        .firestore()
+        .collection("pendingApproval")
         .doc(campName)
         .collection("facility")
         .doc(inputFields[i].facility)
         .set({ location: inputFields[i].location });
     }
 
-    setPendingCamps([]);
-    app
-      .firestore()
-      .collection("users")
-      .doc(authUserId)
-      .collection("pendingApprovalCamp")
-      .get()
-      .then((snapshot) => {
-        snapshot.forEach((doc) => {
-          setPendingCamps((oldArray) => [...oldArray, doc.id]);
-        });
-      });
+    setPendingCamps((oldArray) => [...oldArray, campName]);
 
     setSnackBar(true);
     setTimeout(() => {
@@ -280,8 +256,14 @@ const AddCamp = () => {
     }, 1500);
   };
 
+  const modalClose = () => {
+    setOpenModal(false);
+    setSelectedMyCamp([]);
+  };
+
   const handleClose = () => {
     setOpen(false);
+    setCampName("");
     setInputFields([{ facility: "", location: "" }]);
     setCampNameError("");
     for (let i = 0; i < inputFields.length; i++) {
@@ -295,25 +277,16 @@ const AddCamp = () => {
   React.useEffect(() => {
     app.auth().onAuthStateChanged(async (user) => {
       if (user) {
+        setAuthUserId(user.uid);
+
         await app
           .firestore()
-          .collection("users")
+          .collection("camp")
           .where("uid", "==", user.uid)
           .get()
           .then((snapshot) => {
             snapshot.forEach((doc) => {
-              setAuthUserId(doc.id);
-              app
-                .firestore()
-                .collection("users")
-                .doc(doc.id)
-                .collection("camp")
-                .get()
-                .then((snapshot) => {
-                  snapshot.forEach((doc) => {
-                    setCamps((oldArray) => [...oldArray, doc.id]);
-                  });
-                });
+              setCamps((oldArray) => [...oldArray, doc.id]);
             });
           });
 
@@ -332,21 +305,23 @@ const AddCamp = () => {
   }, []);
 
   const showFacility = (camp) => {
-    setCamps([]);
+    setOpenModal(true);
     app
       .firestore()
-      .collection("users")
-      .doc(authUserId)
       .collection("camp")
       .doc(camp)
       .collection("facility")
       .get()
       .then((snapshot) => {
         snapshot.forEach((doc) => {
-          setCamps((oldArray) => [...oldArray, doc.id]);
+          setSelectedMyCamp((oldArray) => [
+            ...oldArray,
+            { facility: doc.id, location: doc.data().location },
+          ]);
         });
       });
   };
+
   return (
     <React.Fragment>
       <div className={classes.realRoot}>
@@ -433,7 +408,11 @@ const AddCamp = () => {
                   <Grid item key={camp} xs={12} sm={6} md={4}>
                     <Card className={classes.card}>
                       <CardContent className={classes.cardContent}>
-                        <Typography variant="h5" component="h2">
+                        <Typography
+                          variant="h5"
+                          component="h2"
+                          className={classes.typography}
+                        >
                           {camp}
                         </Typography>
                       </CardContent>
@@ -445,6 +424,96 @@ const AddCamp = () => {
                         >
                           자세히
                         </Button>
+                        {/* 여기에 모달 나온다 */}
+                        <Modal
+                          id="showFacility"
+                          className={classes.modal}
+                          open={openModal}
+                          onClose={modalClose}
+                          closeAfterTransition
+                          BackdropComponent={Backdrop}
+                          BackdropProps={{
+                            timeout: 500,
+                          }}
+                        >
+                          <Slide direction="up" in={openModal}>
+                            <div className={classes.paper}>
+                              <Container component="main" maxWidth="md">
+                                <Typography className={classes.modalTypography}>
+                                  추가된 부대 승인하기
+                                </Typography>
+                                <TableContainer
+                                  component={Paper}
+                                  className={classes.tableContainer}
+                                >
+                                  <Table>
+                                    <TableBody>
+                                      <TableRow key="campName">
+                                        <TableCell
+                                          component="th"
+                                          scope="row"
+                                          className={classes.tableRow}
+                                        >
+                                          부대명
+                                        </TableCell>
+                                        <TableCell
+                                          align="left"
+                                          className={classes.tableCell}
+                                        >
+                                          {camp}
+                                        </TableCell>
+                                        <TableCell
+                                          align="left"
+                                          className={classes.tableCell}
+                                        ></TableCell>
+                                      </TableRow>
+
+                                      {selectedMyCamp.map((input, index) => (
+                                        <React.Fragment
+                                          key={`${input}~${index}`}
+                                        >
+                                          <TableRow key={index}>
+                                            <TableCell
+                                              component="th"
+                                              scope="row"
+                                              className={classes.tableRow}
+                                            >
+                                              체육시설 / 위치
+                                            </TableCell>
+                                            <TableCell
+                                              align="left"
+                                              className={classes.tableCell}
+                                            >
+                                              {selectedMyCamp[index].facility}
+                                            </TableCell>
+
+                                            <TableCell
+                                              align="left"
+                                              className={classes.tableCell}
+                                            >
+                                              {selectedMyCamp[index].location}
+                                            </TableCell>
+                                          </TableRow>
+                                        </React.Fragment>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </TableContainer>
+
+                                <span className={classes.modalButtons}>
+                                  <Button
+                                    onClick={modalClose}
+                                    variant="contained"
+                                    color="secondary"
+                                    className={classes.button}
+                                  >
+                                    닫기
+                                  </Button>
+                                </span>
+                              </Container>
+                            </div>
+                          </Slide>
+                        </Modal>
                         <Button color="primary">수정</Button>
                       </CardActions>
                     </Card>
@@ -463,8 +532,6 @@ const AddCamp = () => {
                         <AddIcon fontSize="large" />
                       </Button>
                       <Modal
-                        aria-labelledby="transition-modal-title"
-                        aria-describedby="transition-modal-description"
                         className={classes.modal}
                         open={open}
                         onClose={handleClose}
@@ -484,7 +551,7 @@ const AddCamp = () => {
                                 component={Paper}
                                 className={classes.tableContainer}
                               >
-                                <Table aria-label="simple table">
+                                <Table>
                                   <TableBody>
                                     <TableRow key="campName">
                                       <TableCell
@@ -508,10 +575,6 @@ const AddCamp = () => {
                                             }
                                             type="text"
                                             className={classes.textField}
-                                            aria-describedby="standard-weight-helper-text"
-                                            inputProps={{
-                                              "aria-label": "weight",
-                                            }}
                                             placeholder="부대명을 입력해주십시오."
                                           />
                                         </FormControl>
@@ -651,30 +714,38 @@ const AddCamp = () => {
           ) : (
             <Container className={classes.cardGrid} maxWidth="md">
               <Grid container spacing={4}>
-                {pendingCamps.map((camp) => (
-                  <Grid item key={camp} xs={12} sm={6} md={4}>
-                    <Card className={classes.card}>
-                      <CardContent className={classes.cardContent}>
-                        <Typography variant="h5" component="h2">
-                          {camp}
-                        </Typography>
-                      </CardContent>
-                      <CardActions className={classes.cardButton}>
-                        <Button
-                          value={camp}
-                          color="primary"
-                          onClick={() => showFacility(camp)}
-                        >
-                          자세히
-                        </Button>
-                        <Button color="primary">수정</Button>
-                      </CardActions>
-                    </Card>
-                  </Grid>
-                ))}
+                {pendingCamps.length === 0 ? (
+                  <Typography align="justify" className={classes.noPending}>
+                    승인 대기중인 부대가 없습니다.
+                  </Typography>
+                ) : (
+                  pendingCamps.map((camp) => (
+                    <Grid item key={camp} xs={12} sm={6} md={4}>
+                      <Card className={classes.card}>
+                        <CardContent className={classes.cardContent}>
+                          <Typography
+                            variant="h5"
+                            component="h2"
+                            className={classes.typography}
+                          >
+                            {camp}
+                          </Typography>
+                        </CardContent>
+                        <CardActions className={classes.cardButton}>
+                          <Button
+                            value={camp}
+                            color="primary"
+                            onClick={() => showFacility(camp)}
+                          >
+                            자세히
+                          </Button>
+                          <Button color="primary">수정</Button>
+                        </CardActions>
+                      </Card>
+                    </Grid>
+                  ))
+                )}
                 <Modal
-                  aria-labelledby="transition-modal-title"
-                  aria-describedby="transition-modal-description"
                   className={classes.modal}
                   open={open}
                   onClose={handleClose}
@@ -694,7 +765,7 @@ const AddCamp = () => {
                           component={Paper}
                           className={classes.tableContainer}
                         >
-                          <Table aria-label="simple table">
+                          <Table>
                             <TableBody>
                               <TableRow key="campName">
                                 <TableCell
@@ -716,10 +787,6 @@ const AddCamp = () => {
                                       }
                                       type="text"
                                       className={classes.textField}
-                                      aria-describedby="standard-weight-helper-text"
-                                      inputProps={{
-                                        "aria-label": "weight",
-                                      }}
                                       placeholder="부대명을 입력해주십시오."
                                     />
                                   </FormControl>
@@ -841,7 +908,6 @@ const AddCamp = () => {
             </Container>
           )}
         </main>
-
         <footer className={classes.footer}>
           <Typography
             variant="subtitle1"
@@ -854,7 +920,17 @@ const AddCamp = () => {
           >
             홈페이지 관련문의: 정영안 (T.010-9715-1508)
           </Typography>
-          <Copyright />
+          <Typography
+            variant="body2"
+            color="textSecondary"
+            align="center"
+            style={{
+              fontFamily: ["Jua", '"sans-serif"'],
+            }}
+          >
+            {"Copyright © 체육시설 예약체계 "} {new Date().getFullYear()}
+            {"."}
+          </Typography>
         </footer>
       </div>
     </React.Fragment>
