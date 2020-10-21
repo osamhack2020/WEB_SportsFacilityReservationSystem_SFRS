@@ -12,10 +12,14 @@ import SelectFacility from "./checkoutform/SelectFacility";
 import SelectDate from "./checkoutform/SelectDate";
 import app from "./firebase";
 import moment from "moment";
+import Snackbar from "@material-ui/core/Snackbar";
+import Slide from "@material-ui/core/Slide";
 import Table from "@material-ui/core/Table";
+import Container from "@material-ui/core/Container";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
 import TableContainer from "@material-ui/core/TableContainer";
+import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Box from "@material-ui/core/Box";
@@ -69,6 +73,24 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(3),
     marginBottom: theme.spacing(3),
   },
+  breadcrumbs: {
+    backgroundColor: theme.palette.background.paper,
+    fontSize: 10,
+    padding: "4px 2%",
+    justifyContent: "flex-end",
+    display: "flex",
+  },
+  breadcrumbsTypography: {
+    fontFamily: ["Jua", '"sans-serif"'],
+    fontSize: 12,
+  },
+  heroContent: {
+    backgroundColor: theme.palette.background.paper,
+    padding: theme.spacing(3, 0, 6),
+  },
+  typography: {
+    fontFamily: ["Jua", '"sans-serif"'],
+  },
 }));
 
 const steps = ["부대 선택", "체육시설 선택", "날짜 선택"];
@@ -121,6 +143,8 @@ export default function Checkout() {
   const [selectedFacility, setSelectedFacility] = React.useState("");
   const [restInfo, setRestInfo] = React.useState({});
   const [visitCheck, setVisitCheck] = React.useState(0);
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const [snackbar, setSnackbar] = React.useState(false);
 
   const selectCamp = (name) => {
     setSelectedCamp(name);
@@ -133,7 +157,7 @@ export default function Checkout() {
   };
   const handleNext = () => {
     if (activeStep === steps.length - 1 && Object.keys(restInfo).length === 0) {
-      alert("시간을 선택해주십시오.");
+      setSnackbarOpen(true);
       return;
     }
     setActiveStep(activeStep + 1);
@@ -158,9 +182,8 @@ export default function Checkout() {
                 .doc(selectedFacility)
                 .collection("reservation")
                 .add({ start, end, uid: user.uid, title: restInfo.title });
-            } else {
-              alert("로그인 오류 발생! 다시 한번 시도해주십시오.");
-            }
+            } else setSnackbar(true)
+
             await setVisitCheck(1);
           }
         });
@@ -174,21 +197,72 @@ export default function Checkout() {
       <CssBaseline />
       <div className={classes.realRoot}>
         <main className={classes.layout}>
+          <Breadcrumbs className={classes.breadcrumbs}>
+            <Typography
+              color="textPrimary"
+              className={classes.breadcrumbsTypography}
+            >
+              HOME
+            </Typography>
+            <Typography
+              color="textPrimary"
+              className={classes.breadcrumbsTypography}
+            >
+              예약신청
+            </Typography>
+          </Breadcrumbs>
+          <div className={classes.heroContent}>
+            <Container maxWidth="sm">
+              <Typography
+                variant="h4"
+                align="center"
+                color="textPrimary"
+                className={classes.typography}
+              >
+                예약신청
+              </Typography>
+            </Container>
+          </div>
+
           <Paper className={classes.paper}>
-            <Typography component="h1" variant="h4" align="center">
+            <Typography component="h1" variant="h4" align="center"
+              style={{
+                fontFamily: ["Jua", '"sans-serif"'],
+              }}
+            >
               체육시설 예약하기
             </Typography>
             <Stepper activeStep={activeStep} className={classes.stepper}>
               {steps.map((label) => (
                 <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
+                  <StepLabel id='checkwhere'>{label}</StepLabel>
                 </Step>
               ))}
             </Stepper>
+
+            <Snackbar
+              autoHideDuration={2200}
+              open={snackbarOpen}
+              onClose={() => setSnackbarOpen(false)}
+              TransitionComponent={Slide}
+              message="시간을 선택해주십시오."
+            />
+            <Snackbar
+              autoHideDuration={2200}
+              open={snackbar}
+              onClose={() => setSnackbar(false)}
+              TransitionComponent={Slide}
+              message="로그인 오류 발생! 다시 한번 시도해주십시오."
+            />
+
             <React.Fragment>
               {activeStep === steps.length ? (
                 <React.Fragment>
-                  <Typography variant="h5" gutterBottom>
+                  <Typography variant="h5" gutterBottom
+                    style={{
+                      fontFamily: ["Jua", '"sans-serif"'],
+                    }}
+                  >
                     체육시설 예약이 정상적으로 처리되었습니다.
                   </Typography>
                   <Box boxShadow={1}>
@@ -237,34 +311,34 @@ export default function Checkout() {
                   </Typography>
                 </React.Fragment>
               ) : (
-                <React.Fragment>
-                  {getStepContent(activeStep)}
-                  {activeStep !== 0 && (
-                    <div className={classes.buttons}>
-                      <Button
-                        variant="contained"
-                        onClick={handleBack}
-                        className={classes.button}
-                      >
-                        이전
-                      </Button>
-
-                      {activeStep === steps.length - 1 && (
+                  <React.Fragment>
+                    {getStepContent(activeStep)}
+                    {activeStep !== 0 && (
+                      <div className={classes.buttons}>
                         <Button
                           variant="contained"
-                          color="primary"
-                          onClick={handleNext}
+                          onClick={handleBack}
                           className={classes.button}
                         >
-                          {activeStep === steps.length - 1
-                            ? "예약하기"
-                            : "다음"}
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </React.Fragment>
-              )}
+                          이전
+                      </Button>
+
+                        {activeStep === steps.length - 1 && (
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleNext}
+                            className={classes.button}
+                          >
+                            {activeStep === steps.length - 1
+                              ? "예약하기"
+                              : "다음"}
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </React.Fragment>
+                )}
             </React.Fragment>
           </Paper>
         </main>

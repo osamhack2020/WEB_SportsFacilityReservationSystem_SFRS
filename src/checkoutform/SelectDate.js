@@ -1,7 +1,22 @@
 import React from "react";
 import { Calendar, momentLocalizer, Views } from "react-big-calendar";
 import moment from "moment";
+import Modal from "@material-ui/core/Modal";
+import { makeStyles } from "@material-ui/core/styles";
 import app from "../firebase";
+import TableContainer from "@material-ui/core/TableContainer";
+import FormControl from "@material-ui/core/FormControl";
+import Paper from "@material-ui/core/Paper";
+import TableBody from "@material-ui/core/TableBody";
+import Typography from "@material-ui/core/Typography";
+import Container from "@material-ui/core/Container";
+import Slide from "@material-ui/core/Slide";
+import TableCell from "@material-ui/core/TableCell";
+import Input from "@material-ui/core/Input";
+import Button from "@material-ui/core/Button";
+import Table from "@material-ui/core/Table";
+import Snackbar from "@material-ui/core/Snackbar";
+import TableRow from "@material-ui/core/TableRow";
 import "moment/locale/ko";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
@@ -9,11 +24,76 @@ moment.locale("ko");
 moment.updateLocale("ko", { week: { dow: 1 } });
 const localizer = momentLocalizer(moment);
 
+const useStyles = makeStyles((theme) => ({
+  modal: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tableRow: {
+    fontSize: 16,
+    fontFamily: ["Jua", '"sans-serif"'],
+    paddingLeft: "5%",
+    backgroundColor: "#0f4c8133",
+    width: "30%",
+  },
+  tableCell: {
+    fontSize: 16,
+    fontFamily: ["Jua", '"sans-serif"'],
+    paddingLeft: "5%",
+  },
+  paper: {
+    "@media (min-width: 600px)": {
+      width: "70%",
+    },
+    width: "95%",
+    backgroundColor: theme.palette.background.paper,
+    borderRadius: "4px",
+    boxShadow: theme.shadows[5],
+    padding: theme.spacing(2, 0, 3),
+  },
+  buttons: {
+    display: "flex",
+    justifyContent: "flex-end",
+  },
+  textField: {
+    fontFamily: ["Jua", '"sans-serif"'],
+    marginTop: theme.spacing(0),
+    fontSize: 16,
+    marginBottom: theme.spacing(0),
+    padding: "3%",
+    paddingLeft: "5%",
+    width: "100%",
+  },
+  button: {
+    marginTop: theme.spacing(3),
+    marginLeft: theme.spacing(1),
+  },
+  modalTypography: {
+    fontFamily: ["Jua", '"sans-serif"'],
+    fontSize: 24,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  tableContainer: {
+    maxHeight: 400,
+  },
+}));
+
+
 const SelectDate = ({ camp, facility, save }) => {
+  const classes = useStyles();
+
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const [events, setEvents] = React.useState([]);
   const [count, setCount] = React.useState(0);
   const [minTime, setMinTime] = React.useState(Date.now());
   const [maxTime, setMaxTime] = React.useState(Date.now());
+  const [open, setOpen] = React.useState(false);
+  const [reservationTitle, setReservationTitle] = React.useState('');
+  const [reservationTitleError, setReservationTitleError] = React.useState('');
+  const [start, setStart] = React.useState(0);
+  const [end, setEnd] = React.useState(0);
 
   React.useEffect(() => {
     fetchData(
@@ -101,14 +181,39 @@ const SelectDate = ({ camp, facility, save }) => {
   };
 
   const handleSelect = async ({ start, end }) => {
-    if (count === 0) {
-      const title = window.prompt("예약목적을 작성해주십시오.");
-      if (title) {
-        await setEvents((oldArray) => [...oldArray, { start, end, title }]);
-        save({ start: start, end: end, title: title });
-        setCount(1);
+    setReservationTitleError('')
+    setStart(start)
+    setEnd(end)
+    const today = new Date().getDate();
+
+    if (today + 1 <= start.getDate()) {
+      if (start.getDate() === end.getDate()) {
+        if (count === 0) {
+          setOpen(true);
+          // const title = window.prompt("예약목적을 작성해주십시오.");
+        }
       }
+    } else setSnackbarOpen(true)
+
+  };
+
+  const addReservationTitle = () => {
+    if (reservationTitle !== '') {
+      setEvents((oldArray) => [...oldArray, { start, end, title: reservationTitle }]);
+      save({ start: start, end: end, title: reservationTitle });
+      setCount(1);
+      setOpen(false)
+    } else {
+      setStart(0)
+      setEnd(0)
+      setReservationTitleError(1)
     }
+  }
+
+  const handleClose = () => {
+    setReservationTitle('')
+    setReservationTitleError('')
+    setOpen(false);
   };
 
   const onNavigate = (date) => {
@@ -125,6 +230,7 @@ const SelectDate = ({ camp, facility, save }) => {
         moment(date).endOf("isoWeek").toDate().getTime()
       );
   };
+
   return (
     <div>
       <Calendar
@@ -138,6 +244,87 @@ const SelectDate = ({ camp, facility, save }) => {
         views={{ week: true, day: true }}
         onSelectEvent={(event) => alert(event.title)}
       />
+
+      <Snackbar
+        autoHideDuration={3000}
+        open={snackbarOpen}
+        onClose={() => setSnackbarOpen(false)}
+        TransitionComponent={Slide}
+        message="오늘로부터 하루지난 예약만 가능합니다."
+      />
+
+      <Modal
+        className={classes.modal}
+        open={open}
+        onClose={handleClose}
+        closeAfterTransition
+      >
+        <Slide direction="up" in={open}>
+          <div className={classes.paper}>
+            <Container component="main" maxWidth="md">
+              <Typography className={classes.modalTypography}>
+                체육시설 예약 추가정보
+                        </Typography>
+              <TableContainer
+                component={Paper}
+                className={classes.tableContainer}
+              >
+                <Table>
+                  <TableBody>
+                    <TableRow key="campName">
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        className={classes.tableRow}
+                      >
+                        예약명
+                      </TableCell>
+                      <th>
+                        <FormControl
+                          fullWidth
+                          error={
+                            reservationTitleError === "" ? false : true
+                          }
+                        >
+                          <Input
+                            value={reservationTitle}
+                            onChange={({ target: { value } }) =>
+                              setReservationTitle(value)
+                            }
+                            type="text"
+                            className={classes.textField}
+                            placeholder="예약명을 입력해주십시오."
+                          />
+                        </FormControl>
+                      </th>
+                    </TableRow>
+
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <span className={classes.buttons}>
+                <Button
+                  onClick={addReservationTitle}
+                  variant="contained"
+                  color="primary"
+                  className={classes.button}
+                >
+                  추가
+                </Button>
+                <Button
+                  onClick={handleClose}
+                  variant="contained"
+                  color="secondary"
+                  className={classes.button}
+                >
+                  닫기
+                </Button>
+              </span>
+            </Container>
+          </div>
+        </Slide>
+      </Modal>
     </div>
   );
 };

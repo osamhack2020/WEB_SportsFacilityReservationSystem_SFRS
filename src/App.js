@@ -24,7 +24,7 @@ import GridContainer from "./gridContainer.js";
 import GridItem from "./gridItem.js";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
-import TestPage from "./indexPageDeprecated";
+import Test from "./indexPageDeprecated";
 import {
   BrowserRouter as Router,
   Switch,
@@ -156,10 +156,10 @@ const App = () => {
                           {userInfo.rootAdmin === false ? (
                             <NavLink to="/addCamp">관리자페이지</NavLink>
                           ) : (
-                            <NavLink to="/addCamp" onClick={handleClick}>
-                              관리자페이지
-                            </NavLink>
-                          )}
+                              <NavLink to="/addCamp" onClick={handleClick}>
+                                관리자페이지
+                              </NavLink>
+                            )}
                         </li>
                         {userInfo.rootAdmin === true ? (
                           <StyledMenu
@@ -202,8 +202,8 @@ const App = () => {
                             </StyledMenuItem>
                           </StyledMenu>
                         ) : (
-                          <span></span>
-                        )}
+                            <span></span>
+                          )}
                       </div>
                     );
                   }
@@ -219,8 +219,8 @@ const App = () => {
                     currentUser ? (
                       <NavLink to="/myInfoPage">&nbsp;내정보</NavLink>
                     ) : (
-                      <NavLink to="/signUp">&nbsp;회원가입</NavLink>
-                    )
+                        <NavLink to="/signUp">&nbsp;회원가입</NavLink>
+                      )
                   }
                 </AuthContext.Consumer>
               </li>
@@ -240,11 +240,11 @@ const App = () => {
                       </NavLink>
                     </li>
                   ) : (
-                    <li>
-                      <Login />
-                      <NavLink to="/login">&nbsp;로그인</NavLink>
-                    </li>
-                  )
+                      <li>
+                        <Login />
+                        <NavLink to="/login">&nbsp;로그인</NavLink>
+                      </li>
+                    )
                 }
               </AuthContext.Consumer>
             </ul>
@@ -307,12 +307,12 @@ const App = () => {
 
           <Route path="/myInfoPage" component={MyInfoPage} />
 
-          <Route path="/test" component={TestPage} />
+          <Route path="/test" component={Test} />
 
           <Route
             path="/approveCamp"
             component={ApproveCamp}
-            // render={() => <AddFacility user={currentUser} />}
+          // render={() => <AddFacility user={currentUser} />}
           />
 
           <PrivateRoute path="/addCamp" component={AddCamp} />

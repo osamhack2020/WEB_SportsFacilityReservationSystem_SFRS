@@ -336,31 +336,31 @@ const AddCamp = () => {
                     승인 대기중인 추가될 부대가 없습니다.
                   </Typography>
                 ) : (
-                  camps.map((camp) => (
-                    <Grid item key={camp.camp} xs={12} sm={6} md={4}>
-                      <Card className={classes.card}>
-                        <CardContent className={classes.cardContent}>
-                          <Typography
-                            variant="h5"
-                            component="h2"
-                            className={classes.typography}
-                          >
-                            {camp.camp}
-                          </Typography>
-                        </CardContent>
-                        <CardActions className={classes.cardButton}>
-                          <Button
-                            value={camp.camp}
-                            color="primary"
-                            onClick={() => showFacility(camp)}
-                          >
-                            승인 / 미승인
+                    camps.map((camp) => (
+                      <Grid item key={camp.camp} xs={12} sm={6} md={4}>
+                        <Card className={classes.card}>
+                          <CardContent className={classes.cardContent}>
+                            <Typography
+                              variant="h5"
+                              component="h2"
+                              className={classes.typography}
+                            >
+                              {camp.camp}
+                            </Typography>
+                          </CardContent>
+                          <CardActions className={classes.cardButton}>
+                            <Button
+                              value={camp.camp}
+                              color="primary"
+                              onClick={() => showFacility(camp)}
+                            >
+                              승인 / 미승인
                           </Button>
-                        </CardActions>
-                      </Card>
-                    </Grid>
-                  ))
-                )}
+                          </CardActions>
+                        </Card>
+                      </Grid>
+                    ))
+                  )}
 
                 <Modal
                   className={classes.modal}
@@ -482,8 +482,8 @@ const AddCamp = () => {
               </Grid>
             </Container>
           ) : (
-            <div>asd</div>
-          )}
+              <div>asd</div>
+            )}
         </main>
         <footer className={classes.footer}>
           <Typography
