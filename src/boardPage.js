@@ -15,7 +15,13 @@ import Backdrop from "@material-ui/core/Backdrop";
 import Slide from "@material-ui/core/Slide";
 import TableContainer from "@material-ui/core/TableContainer";
 import Button from "@material-ui/core/Button";
+import FormControl from "@material-ui/core/FormControl";
+import Input from "@material-ui/core/Input";
 import app from "./firebase";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import Snackbar from "@material-ui/core/Snackbar";
+import moment from "moment";
+import Pagination from "@material-ui/lab/Pagination";
 
 const useStyles = makeStyles((theme) => ({
   breadcrumbs: {
@@ -24,6 +30,19 @@ const useStyles = makeStyles((theme) => ({
     padding: "4px 2%",
     justifyContent: "flex-end",
     display: "flex",
+  },
+  backdrop: {
+    zIndex: theme.zIndex.drawer + 1,
+    color: "#fff",
+  },
+  textField: {
+    fontFamily: ["Jua", '"sans-serif"'],
+    marginTop: theme.spacing(0),
+    fontSize: 16,
+    marginBottom: theme.spacing(0),
+    padding: "2%",
+    paddingLeft: "5%",
+    width: "100%",
   },
   modal: {
     display: "flex",
@@ -39,15 +58,37 @@ const useStyles = makeStyles((theme) => ({
   tableBody: {
     backgroundColor: "#fafafa",
   },
+  tableCell: {
+    fontSize: 15,
+    fontFamily: ["Jua", '"sans-serif"'],
+    paddingLeft: "4%",
+  },
+  tableRow: {
+    fontSize: 15,
+    fontFamily: ["Jua", '"sans-serif"'],
+    paddingLeft: "5%",
+    backgroundColor: "#0f4c8133",
+    width: "26%",
+  },
   paper: {
-    margin: "3% 10%",
-    marginBottom: "2%",
-    display: "flex",
-    justifyContent: "center",
+    marginTop: theme.spacing(3),
+    marginBottom: theme.spacing(2),
+    padding: theme.spacing(2),
+    [theme.breakpoints.up(1000 + theme.spacing(3) * 2)]: {
+      marginTop: theme.spacing(6),
+      marginBottom: theme.spacing(4),
+      padding: theme.spacing(3),
+    },
   },
   breadcrumbsTypography: {
     fontFamily: ["Jua", '"sans-serif"'],
     fontSize: 12,
+  },
+  modalTypography: {
+    fontFamily: ["Jua", '"sans-serif"'],
+    fontSize: 24,
+    marginBottom: 20,
+    textAlign: "center",
   },
   heroContent: {
     backgroundColor: theme.palette.background.paper,
@@ -59,7 +100,7 @@ const useStyles = makeStyles((theme) => ({
   realRoot: {
     display: "flex",
     flexDirection: "column",
-    minHeight: "100vh",
+    minHeight: "150vh",
   },
   footer: {
     backgroundColor: theme.palette.background.paper,
@@ -69,64 +110,161 @@ const useStyles = makeStyles((theme) => ({
   buttons: {
     display: "flex",
     justifyContent: "flex-end",
-    marginRight: "10%",
+  },
+  papers: {
+    "@media (min-width: 600px)": {
+      width: "70%",
+    },
+    width: "95%",
+    backgroundColor: theme.palette.background.paper,
+    borderRadius: "4px",
+    boxShadow: theme.shadows[5],
+    padding: theme.spacing(2, 0, 3),
+  },
+  modalButtons: {
+    marginTop: "10px",
+    display: "flex",
+    justifyContent: "flex-end",
+  },
+  layout: {
+    width: "auto",
+    marginLeft: theme.spacing(1),
+    marginRight: theme.spacing(1),
+    [theme.breakpoints.up(1000 + theme.spacing(2) * 2)]: {
+      width: 1000,
+      marginLeft: "auto",
+      marginRight: "auto",
+    },
   },
 }));
-
-const customers = [
-  {
-    id: 1,
-    name: "홍길동",
-    birthday: "961222",
-    gender: "남자",
-    job: "대학생",
-  },
-  {
-    id: 2,
-    name: "나동빈",
-    birthday: "960508",
-    gender: "남자",
-    job: "프로그래머",
-  },
-  {
-    id: 3,
-    name: "이순신",
-    birthday: "961127",
-    gender: "남자",
-    job: "디자이너",
-  },
-];
 
 const BoardPage = () => {
   const classes = useStyles();
 
+  const [showAddButton, setShowAddButton] = React.useState(false);
+  const [title, setTitle] = React.useState("");
+  const [titleError, setTitleError] = React.useState(false);
+  const [contentError, setContentError] = React.useState(false);
   const [openModal, setOpenModal] = React.useState(false);
+  const [userData, setUserData] = React.useState("");
+  const [content, setContent] = React.useState("");
+  const [boardContent, setBoardContent] = React.useState([]);
+  const [openProgress, setOpenProgress] = React.useState(false);
+  const [snackbar, setSnackbar] = React.useState(false);
+  const [boardCount, setBoardCount] = React.useState(0);
 
   const modalClose = () => {
+    setContent("");
+    setTitle("");
+    setTitleError(false);
     setOpenModal(false);
   };
 
-  // React.useEffect(() => {
-  //   app.auth().onAuthStateChanged(async (user) => {
-  //     if (user) {
-  //       await app
-  //         .firestore()
-  //         .collection("camp")
-  //         .doc("1함대")
-  //         .collection("facility")
-  //         .doc("축구장")
-  //         .collection("reservation")
-  //         .where("uid", "==", user.uid)
-  //         .get()
-  //         .then((snapshot) => {
-  //           snapshot.forEach((doc) => {
-  //             console.log(doc.data());
-  //             console.log(doc.id);
-  //           });
-  //         });
-  //     }
-  //   });
-  // }, []);
+  const modalCloseAndUpdate = async () => {
+    setContent("");
+    setTitle("");
+    setTitleError(false);
+    setOpenModal(false);
+
+    setBoardContent([]);
+    await app
+      .firestore()
+      .collection("board")
+      .orderBy("writeDate", "desc")
+      .limit(10)
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setBoardContent((oldArray) => [
+            ...oldArray,
+            {
+              title: doc.data().title,
+              writer: doc.data().writer,
+              writeDate: doc.data().writeDate,
+            },
+          ]);
+        });
+      });
+  };
+
+  const addBoard = () => {
+    setOpenProgress(true);
+    setTitleError(false);
+    setContentError(false);
+    setTimeout(() => {
+      setOpenProgress(false);
+    }, 400);
+
+    if (title === "") setTitleError(true);
+    else if (content === "") setContentError(true);
+    else {
+      app.firestore().collection("board").add({
+        writeDate: new Date(),
+        writer: userData,
+        title,
+        content,
+      });
+
+      app
+        .firestore()
+        .collection("board")
+        .doc("count")
+        .update({ count: boardCount });
+
+      setSnackbar(true);
+      setTimeout(() => {
+        modalCloseAndUpdate();
+      }, 1400);
+    }
+  };
+
+  React.useEffect(() => {
+    app.auth().onAuthStateChanged(async (user) => {
+      if (user) {
+        setShowAddButton(true);
+        await app
+          .firestore()
+          .collection("users")
+          .where("uid", "==", user.uid)
+          .get()
+          .then((snapshot) => {
+            snapshot.forEach((doc) => {
+              setUserData(
+                `${doc.data().military} ${doc.data().rank} ${doc.data().name}`
+              );
+            });
+          });
+      }
+    });
+
+    app
+      .firestore()
+      .collection("board")
+      .doc("count")
+      .get()
+      .then((snapshot) => {
+        setBoardCount(snapshot.data().count + 1);
+      });
+
+    app
+      .firestore()
+      .collection("board")
+      .orderBy("writeDate", "desc")
+      .limit(10)
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setBoardContent((oldArray) => [
+            ...oldArray,
+            {
+              title: doc.data().title,
+              writer: doc.data().writer,
+              writeDate: doc.data().writeDate,
+            },
+          ]);
+        });
+      });
+  }, []);
 
   return (
     <div className={classes.realRoot}>
@@ -164,40 +302,47 @@ const BoardPage = () => {
             </Typography>
           </Container>
         </div>
-        <Paper className={classes.paper}>
-          <Table>
-            <TableHead className={classes.tableHead}>
-              <TableRow>
-                <TableCell>번호</TableCell>
-                <TableCell>이름</TableCell>
-                <TableCell>생년월일</TableCell>
-                <TableCell>성별</TableCell>
-                <TableCell>직업</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody className={classes.tableBody}>
-              {customers.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell>{c.id}</TableCell>
-                  <TableCell>{c.name}</TableCell>
-                  <TableCell>{c.birthday}</TableCell>
-                  <TableCell>{c.gender}</TableCell>
-                  <TableCell>{c.job}</TableCell>
+        <div className={classes.layout}>
+          <Paper className={classes.paper}>
+            <Table>
+              <TableHead className={classes.tableHead}>
+                <TableRow>
+                  <TableCell>제목</TableCell>
+                  <TableCell>작성자</TableCell>
+                  <TableCell>등록일</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Paper>
-
-        <div className={classes.buttons}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => setOpenModal(true)}
-          >
-            글쓰기
-          </Button>
+              </TableHead>
+              <TableBody className={classes.tableBody}>
+                {boardContent.map((content, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{content.title}</TableCell>
+                    <TableCell>{content.writer}</TableCell>
+                    <TableCell>
+                      {moment(content.writeDate.toDate()).format(
+                        "YYYY/MM/DD hh:mm"
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Paper>
+          <Pagination count={10} className={classes.modal} color="primary" />
+          <div className={classes.buttons}>
+            {showAddButton ? (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => setOpenModal(true)}
+              >
+                글쓰기
+              </Button>
+            ) : (
+              <div></div>
+            )}
+          </div>
         </div>
+
         <Modal
           className={classes.modal}
           open={openModal}
@@ -209,10 +354,10 @@ const BoardPage = () => {
           }}
         >
           <Slide direction="up" in={openModal}>
-            <div className={classes.paper}>
+            <div className={classes.papers}>
               <Container component="main" maxWidth="md">
                 <Typography className={classes.modalTypography}>
-                  추가된 부대 승인하기
+                  자유게시판
                 </Typography>
                 <TableContainer
                   component={Paper}
@@ -220,27 +365,91 @@ const BoardPage = () => {
                 >
                   <Table>
                     <TableBody>
-                      <TableRow key="campName">
+                      <TableRow key="title">
                         <TableCell
                           component="th"
                           scope="row"
                           className={classes.tableRow}
                         >
-                          부대명
+                          제목
+                        </TableCell>
+                        <th
+                          style={{
+                            borderBottom: "1px solid rgba(224, 224, 224, 1)",
+                          }}
+                        >
+                          <FormControl fullWidth error={titleError}>
+                            <Input
+                              value={title}
+                              onChange={({ target: { value } }) =>
+                                setTitle(value)
+                              }
+                              type="text"
+                              className={classes.textField}
+                              placeholder="제목을 입력하십시오."
+                            />
+                          </FormControl>
+                        </th>
+                      </TableRow>
+                      <TableRow key="writerName">
+                        <TableCell
+                          component="th"
+                          scope="row"
+                          className={classes.tableRow}
+                        >
+                          작성자
                         </TableCell>
                         <TableCell align="left" className={classes.tableCell}>
-                          abracadabra
+                          {userData}
                         </TableCell>
+                      </TableRow>
+                      <TableRow key="content">
                         <TableCell
-                          align="left"
-                          className={classes.tableCell}
-                        ></TableCell>
+                          component="th"
+                          scope="row"
+                          className={classes.tableRow}
+                        >
+                          내용
+                        </TableCell>
+                        <th>
+                          <FormControl fullWidth error={contentError}>
+                            <Input
+                              value={content}
+                              onChange={({ target: { value } }) =>
+                                setContent(value)
+                              }
+                              multiline
+                              rows={4}
+                              type="text"
+                              className={classes.textField}
+                              placeholder="내용을 입력하십시오."
+                            />
+                          </FormControl>
+                        </th>
                       </TableRow>
                     </TableBody>
                   </Table>
                 </TableContainer>
 
                 <span className={classes.modalButtons}>
+                  <Button
+                    onClick={addBoard}
+                    variant="contained"
+                    color="primary"
+                    className={classes.button}
+                  >
+                    확인
+                  </Button>
+                  <Backdrop className={classes.backdrop} open={openProgress}>
+                    <CircularProgress color="inherit" />
+                  </Backdrop>
+                  <Snackbar
+                    autoHideDuration={2000}
+                    open={snackbar}
+                    onClose={() => setSnackbar(false)}
+                    TransitionComponent={Slide}
+                    message="글이 등록되었습니다."
+                  />
                   <Button
                     onClick={modalClose}
                     variant="contained"

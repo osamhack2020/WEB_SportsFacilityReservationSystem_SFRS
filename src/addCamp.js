@@ -105,7 +105,7 @@ const useStyles = makeStyles((theme) => ({
     fontFamily: ["Jua", '"sans-serif"'],
     paddingLeft: "5%",
     backgroundColor: "#0f4c8133",
-    width: "30%",
+    width: "26%",
   },
   button: {
     marginTop: theme.spacing(3),
@@ -327,7 +327,6 @@ const AddCamp = () => {
       .get()
       .then((snapshot) => {
         snapshot.forEach((doc) => {
-          console.log(doc.id, doc.data());
           setSelectedMyCamp((oldArray) => [
             ...oldArray,
             { facility: doc.id, location: doc.data().location },
@@ -430,8 +429,6 @@ const AddCamp = () => {
                         >
                           자세히히
                         </Button>
-                        {/* 여기에 모달 나온다 */}
-
                         <Button color="primary">수정</Button>
                       </CardActions>
                     </Card>
