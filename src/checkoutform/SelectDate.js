@@ -81,7 +81,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-const SelectDate = ({ camp, facility, save }) => {
+const SelectDate = ({ camp, facility, save, isView }) => {
   const classes = useStyles();
 
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
@@ -94,6 +94,8 @@ const SelectDate = ({ camp, facility, save }) => {
   const [reservationTitleError, setReservationTitleError] = React.useState('');
   const [start, setStart] = React.useState(0);
   const [end, setEnd] = React.useState(0);
+  const [userData, setUserData] = React.useState({});
+  const [userDataOpen, setUserDataOpen] = React.useState(false);
 
   React.useEffect(() => {
     fetchData(
@@ -123,6 +125,7 @@ const SelectDate = ({ camp, facility, save }) => {
                 start: doc.data().start.toDate(),
                 end: doc.data().end.toDate(),
                 title: doc.data().title,
+                uid: doc.data().uid,
               },
             ]);
           });
@@ -231,6 +234,22 @@ const SelectDate = ({ camp, facility, save }) => {
       );
   };
 
+  const doNothing = () => { }
+
+  const clickEvent = async (event) => {
+    await app.firestore().collection("users").where('uid', '==', event.uid).get().then(snapshot => {
+      snapshot.forEach(doc => {
+        setUserData({ ...doc.data(), title: event.title, start: event.start, end: event.end })
+      });
+    })
+
+    setUserDataOpen(true)
+  }
+
+  const closeUserData = () => {
+    setUserDataOpen(false)
+  }
+
   return (
     <div>
       <Calendar
@@ -240,9 +259,9 @@ const SelectDate = ({ camp, facility, save }) => {
         defaultDate={new Date()}
         defaultView={Views.WEEK}
         events={events}
-        onSelectSlot={handleSelect}
+        onSelectSlot={isView ? doNothing : handleSelect}
         views={{ week: true, day: true }}
-        onSelectEvent={(event) => alert(event.title)}
+        onSelectEvent={(event) => clickEvent(event)}
       />
 
       <Snackbar
@@ -252,6 +271,141 @@ const SelectDate = ({ camp, facility, save }) => {
         TransitionComponent={Slide}
         message="오늘로부터 하루지난 예약만 가능합니다."
       />
+
+
+      <Modal
+        className={classes.modal}
+        open={userDataOpen}
+        onClose={closeUserData}
+        closeAfterTransition
+      >
+        <Slide direction="up" in={userDataOpen}>
+          <div className={classes.paper}>
+            <Container component="main" maxWidth="md">
+              <Typography className={classes.modalTypography}>
+                체육시설 예약 추가정보
+              </Typography>
+              <TableContainer
+                component={Paper}
+                className={classes.tableContainer}
+              >
+                <Table>
+                  <TableBody>
+                    <TableRow key="1">
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        className={classes.tableRow}
+                      >
+                        예약명
+                      </TableCell>
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        className={classes.tableCell}
+                      >
+                        {userData.title}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow key="2">
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        className={classes.tableRow}
+                      >
+                        예약자
+                      </TableCell>
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        className={classes.tableCell}
+                      >
+                        {userData.military + ' ' + userData.rank + ' ' + userData.name}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow key="3">
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        className={classes.tableRow}
+                      >
+                        군번
+                      </TableCell>
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        className={classes.tableCell}
+                      >
+                        {userData.serialNumber}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow key="4">
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        className={classes.tableRow}
+                      >
+                        시작시간
+                      </TableCell>
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        className={classes.tableCell}
+                      >
+                        {moment(userData.start).format("YYYY년M월D일 HH:mm")}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow key="5">
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        className={classes.tableRow}
+                      >
+                        종료시간
+                      </TableCell>
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        className={classes.tableCell}
+                      >
+                        {moment(userData.end).format("YYYY년M월D일 HH:mm")}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow key="6">
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        className={classes.tableRow}
+                      >
+                        예약한 체육시설
+                      </TableCell>
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        className={classes.tableCell}
+                      >
+                        {camp + ' ' + facility}
+                      </TableCell>
+                    </TableRow>
+
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <span className={classes.buttons}>
+                <Button
+                  onClick={closeUserData}
+                  variant="contained"
+                  color="secondary"
+                  className={classes.button}
+                >
+                  닫기
+                </Button>
+              </span>
+            </Container>
+          </div>
+        </Slide>
+      </Modal>
 
       <Modal
         className={classes.modal}

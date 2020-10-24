@@ -194,9 +194,9 @@ export default function Checkout() {
 
   return (
     <React.Fragment>
-      <CssBaseline />
       <div className={classes.realRoot}>
-        <main className={classes.layout}>
+        <CssBaseline />
+        <main>
           <Breadcrumbs className={classes.breadcrumbs}>
             <Typography
               color="textPrimary"
@@ -223,124 +223,125 @@ export default function Checkout() {
               </Typography>
             </Container>
           </div>
+          <div className={classes.layout}>
+            <Paper className={classes.paper}>
+              <Typography component="h1" variant="h4" align="center"
+                style={{
+                  fontFamily: ["Jua", '"sans-serif"'],
+                }}
+              >
+                체육시설 예약하기
+              </Typography>
+              <Stepper activeStep={activeStep} className={classes.stepper}>
+                {steps.map((label) => (
+                  <Step key={label}>
+                    <StepLabel id='checkwhere'>{label}</StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
 
-          <Paper className={classes.paper}>
-            <Typography component="h1" variant="h4" align="center"
-              style={{
-                fontFamily: ["Jua", '"sans-serif"'],
-              }}
-            >
-              체육시설 예약하기
-            </Typography>
-            <Stepper activeStep={activeStep} className={classes.stepper}>
-              {steps.map((label) => (
-                <Step key={label}>
-                  <StepLabel id='checkwhere'>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
+              <Snackbar
+                autoHideDuration={2200}
+                open={snackbarOpen}
+                onClose={() => setSnackbarOpen(false)}
+                TransitionComponent={Slide}
+                message="시간을 선택해주십시오."
+              />
+              <Snackbar
+                autoHideDuration={2200}
+                open={snackbar}
+                onClose={() => setSnackbar(false)}
+                TransitionComponent={Slide}
+                message="로그인 오류 발생! 다시 한번 시도해주십시오."
+              />
 
-            <Snackbar
-              autoHideDuration={2200}
-              open={snackbarOpen}
-              onClose={() => setSnackbarOpen(false)}
-              TransitionComponent={Slide}
-              message="시간을 선택해주십시오."
-            />
-            <Snackbar
-              autoHideDuration={2200}
-              open={snackbar}
-              onClose={() => setSnackbar(false)}
-              TransitionComponent={Slide}
-              message="로그인 오류 발생! 다시 한번 시도해주십시오."
-            />
-
-            <React.Fragment>
-              {activeStep === steps.length ? (
-                <React.Fragment>
-                  <Typography variant="h5" gutterBottom
-                    style={{
-                      fontFamily: ["Jua", '"sans-serif"'],
-                    }}
-                  >
-                    체육시설 예약이 정상적으로 처리되었습니다.
-                  </Typography>
-                  <Box boxShadow={1}>
-                    <Typography className={classes.table} variant="subtitle1">
-                      <TableContainer component={Paper}>
-                        <Table>
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>부대</TableCell>
-                              <TableCell align="right">체육시설</TableCell>
-                              <TableCell align="right">예약명</TableCell>
-                              <TableCell align="right">시작시간</TableCell>
-                              <TableCell align="right">종료시간</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            <TableRow key="reservationInfo">
-                              <TableCell component="th" scope="row">
-                                {selectedCamp}
-                              </TableCell>
-                              <TableCell align="right">
-                                {selectedFacility}
-                              </TableCell>
-                              <TableCell align="right">
-                                {restInfo.title}
-                              </TableCell>
-                              <TableCell align="right">
-                                {moment(restInfo.start).format(
-                                  "YYYY년 M월 D일 HH:mm"
-                                )}
-                              </TableCell>
-                              <TableCell align="right">
-                                {moment(restInfo.end).format(
-                                  "YYYY년 M월 D일 HH:mm"
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </Typography>
-                  </Box>
-                  <Typography variant="subtitle1">
-                    신청하신 예약은 마이페이지 또는 예약환인 탭에서 조회하실 수
-                    있습니다.
-                  </Typography>
-                </React.Fragment>
-              ) : (
+              <React.Fragment>
+                {activeStep === steps.length ? (
                   <React.Fragment>
-                    {getStepContent(activeStep)}
-                    {activeStep !== 0 && (
-                      <div className={classes.buttons}>
-                        <Button
-                          variant="contained"
-                          onClick={handleBack}
-                          className={classes.button}
-                        >
-                          이전
-                      </Button>
-
-                        {activeStep === steps.length - 1 && (
+                    <Typography variant="h5" gutterBottom
+                      style={{
+                        fontFamily: ["Jua", '"sans-serif"'],
+                      }}
+                    >
+                      체육시설 예약이 정상적으로 처리되었습니다.
+                  </Typography>
+                    <Box boxShadow={1}>
+                      <Typography className={classes.table} variant="subtitle1">
+                        <TableContainer component={Paper}>
+                          <Table>
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>부대</TableCell>
+                                <TableCell align="right">체육시설</TableCell>
+                                <TableCell align="right">예약명</TableCell>
+                                <TableCell align="right">시작시간</TableCell>
+                                <TableCell align="right">종료시간</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              <TableRow key="reservationInfo">
+                                <TableCell component="th" scope="row">
+                                  {selectedCamp}
+                                </TableCell>
+                                <TableCell align="right">
+                                  {selectedFacility}
+                                </TableCell>
+                                <TableCell align="right">
+                                  {restInfo.title}
+                                </TableCell>
+                                <TableCell align="right">
+                                  {moment(restInfo.start).format(
+                                    "YYYY년 M월 D일 HH:mm"
+                                  )}
+                                </TableCell>
+                                <TableCell align="right">
+                                  {moment(restInfo.end).format(
+                                    "YYYY년 M월 D일 HH:mm"
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      </Typography>
+                    </Box>
+                    <Typography variant="subtitle1">
+                      신청하신 예약은 마이페이지 또는 예약환인 탭에서 조회하실 수
+                      있습니다.
+                  </Typography>
+                  </React.Fragment>
+                ) : (
+                    <React.Fragment>
+                      {getStepContent(activeStep)}
+                      {activeStep !== 0 && (
+                        <div className={classes.buttons}>
                           <Button
                             variant="contained"
-                            color="primary"
-                            onClick={handleNext}
+                            onClick={handleBack}
                             className={classes.button}
                           >
-                            {activeStep === steps.length - 1
-                              ? "예약하기"
-                              : "다음"}
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </React.Fragment>
-                )}
-            </React.Fragment>
-          </Paper>
+                            이전
+                      </Button>
+
+                          {activeStep === steps.length - 1 && (
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              onClick={handleNext}
+                              className={classes.button}
+                            >
+                              {activeStep === steps.length - 1
+                                ? "예약하기"
+                                : "다음"}
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </React.Fragment>
+                  )}
+              </React.Fragment>
+            </Paper>
+          </div>
         </main>
         <footer className={classes.footer}>
           <Typography

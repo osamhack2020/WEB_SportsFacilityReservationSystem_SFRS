@@ -12,7 +12,7 @@ import SignIn from "./signIn";
 import MyInfoPage from "./myInfoPage";
 import ApproveCamp from "./approveCamp";
 import AddCamp from "./addCamp";
-import CampList from "./campList";
+import ShowReservation from "./showReservation";
 import Checkout from "./reservation";
 import Reservation from "./reservation";
 import app from "./firebase";
@@ -301,7 +301,7 @@ const App = () => {
 
           <PrivateRoute path="/reservation" component={Reservation} />
 
-          <Route path="/showReservation" component={CampList} />
+          <Route path="/showReservation" component={ShowReservation} />
 
           <Route path="/login" component={SignIn} />
 

@@ -31,7 +31,16 @@ import HourglassEmptyIcon from "@material-ui/icons/HourglassEmpty";
 import AddToQueueIcon from "@material-ui/icons/AddToQueue";
 
 const useStyles = makeStyles((theme) => ({
-
+  layout: {
+    width: "auto",
+    marginLeft: theme.spacing(2),
+    marginRight: theme.spacing(2),
+    [theme.breakpoints.up(1000 + theme.spacing(2) * 2)]: {
+      width: 1000,
+      marginLeft: "auto",
+      marginRight: "auto",
+    },
+  },
   root: {
     width: 500,
   },
@@ -325,9 +334,9 @@ const AddCamp = () => {
 
   return (
     <React.Fragment>
+      <CssBaseline />
       <div className={classes.realRoot}>
-        <CssBaseline />
-        <main>
+        <main className={classes.layout}>
           <Breadcrumbs className={classes.breadcrumbs}>
             <Typography
               color="textPrimary"
