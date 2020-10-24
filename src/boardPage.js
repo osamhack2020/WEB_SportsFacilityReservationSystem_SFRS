@@ -21,7 +21,9 @@ import app from "./firebase";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Snackbar from "@material-ui/core/Snackbar";
 import moment from "moment";
-import Pagination from "@material-ui/lab/Pagination";
+import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
+import IconButton from "@material-ui/core/IconButton";
+import TextField from "@material-ui/core/TextField";
 
 const useStyles = makeStyles((theme) => ({
   breadcrumbs: {
@@ -71,11 +73,11 @@ const useStyles = makeStyles((theme) => ({
     width: "26%",
   },
   paper: {
-    marginTop: theme.spacing(3),
+    marginTop: theme.spacing(1),
     marginBottom: theme.spacing(2),
     padding: theme.spacing(2),
     [theme.breakpoints.up(1000 + theme.spacing(3) * 2)]: {
-      marginTop: theme.spacing(6),
+      marginTop: theme.spacing(2),
       marginBottom: theme.spacing(4),
       padding: theme.spacing(3),
     },
@@ -100,7 +102,7 @@ const useStyles = makeStyles((theme) => ({
   realRoot: {
     display: "flex",
     flexDirection: "column",
-    minHeight: "150vh",
+    minHeight: "100vh",
   },
   footer: {
     backgroundColor: theme.palette.background.paper,
@@ -109,7 +111,7 @@ const useStyles = makeStyles((theme) => ({
   },
   buttons: {
     display: "flex",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
   },
   papers: {
     "@media (min-width: 600px)": {
@@ -152,6 +154,31 @@ const BoardPage = () => {
   const [openProgress, setOpenProgress] = React.useState(false);
   const [snackbar, setSnackbar] = React.useState(false);
   const [boardCount, setBoardCount] = React.useState(0);
+  const [showMoreButton, setShowMoreButton] = React.useState(true);
+
+  const handleChange = async () => {
+    const lastContent = boardContent[boardContent.length - 1].writeDate;
+    await app
+      .firestore()
+      .collection("board")
+      .orderBy("writeDate", "desc")
+      .startAfter(lastContent)
+      .limit(10)
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setBoardContent((oldArray) => [
+            ...oldArray,
+            {
+              title: doc.data().title,
+              writer: doc.data().writer,
+              writeDate: doc.data().writeDate,
+            },
+          ]);
+        });
+      });
+    if (boardContent.length + 10 >= boardCount - 1) setShowMoreButton(false);
+  };
 
   const modalClose = () => {
     setContent("");
@@ -219,24 +246,6 @@ const BoardPage = () => {
   };
 
   React.useEffect(() => {
-    app.auth().onAuthStateChanged(async (user) => {
-      if (user) {
-        setShowAddButton(true);
-        await app
-          .firestore()
-          .collection("users")
-          .where("uid", "==", user.uid)
-          .get()
-          .then((snapshot) => {
-            snapshot.forEach((doc) => {
-              setUserData(
-                `${doc.data().military} ${doc.data().rank} ${doc.data().name}`
-              );
-            });
-          });
-      }
-    });
-
     app
       .firestore()
       .collection("board")
@@ -264,6 +273,24 @@ const BoardPage = () => {
           ]);
         });
       });
+
+    app.auth().onAuthStateChanged(async (user) => {
+      if (user) {
+        setShowAddButton(true);
+        await app
+          .firestore()
+          .collection("users")
+          .where("uid", "==", user.uid)
+          .get()
+          .then((snapshot) => {
+            snapshot.forEach((doc) => {
+              setUserData(
+                `${doc.data().military} ${doc.data().rank} ${doc.data().name}`
+              );
+            });
+          });
+      }
+    });
   }, []);
 
   return (
@@ -303,32 +330,8 @@ const BoardPage = () => {
           </Container>
         </div>
         <div className={classes.layout}>
-          <Paper className={classes.paper}>
-            <Table>
-              <TableHead className={classes.tableHead}>
-                <TableRow>
-                  <TableCell>제목</TableCell>
-                  <TableCell>작성자</TableCell>
-                  <TableCell>등록일</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody className={classes.tableBody}>
-                {boardContent.map((content, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{content.title}</TableCell>
-                    <TableCell>{content.writer}</TableCell>
-                    <TableCell>
-                      {moment(content.writeDate.toDate()).format(
-                        "YYYY/MM/DD hh:mm"
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Paper>
-          <Pagination count={10} className={classes.modal} color="primary" />
           <div className={classes.buttons}>
+            <TextField label="게시물 검색" variant="outlined" />
             {showAddButton ? (
               <Button
                 variant="contained"
@@ -341,6 +344,47 @@ const BoardPage = () => {
               <div></div>
             )}
           </div>
+
+          <Paper className={classes.paper}>
+            <Table>
+              <TableHead className={classes.tableHead}>
+                <TableRow>
+                  <TableCell>번호</TableCell>
+                  <TableCell>제목</TableCell>
+                  <TableCell>작성자</TableCell>
+                  <TableCell>등록일</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody className={classes.tableBody}>
+                {boardContent.map((content, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{content.title}</TableCell>
+                    <TableCell>{content.writer}</TableCell>
+                    <TableCell>
+                      {moment(content.writeDate.toDate()).format(
+                        "YYYY/MM/DD hh:mm"
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Paper>
+
+          {showMoreButton ? (
+            <IconButton
+              color="primary"
+              aria-label="upload picture"
+              component="span"
+              className={classes.modal}
+              onClick={handleChange}
+            >
+              <ExpandMoreIcon style={{ fontSize: 40 }} />
+            </IconButton>
+          ) : (
+            <div></div>
+          )}
         </div>
 
         <Modal
