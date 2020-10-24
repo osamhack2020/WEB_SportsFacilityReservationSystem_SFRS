@@ -3,14 +3,20 @@ import "./App.css";
 import Bars from "./fontawesome/bars";
 import Edit from "./fontawesome/edit";
 import User from "./fontawesome/user";
+import Grow from "@material-ui/core/Grow";
+import Paper from "@material-ui/core/Paper";
+import Popper from "@material-ui/core/Popper";
 import Login from "./fontawesome/login";
 import Logout from "./fontawesome/logout";
 import PrivateRoute from "./privateRoute";
 import Typography from "@material-ui/core/Typography";
 import SignUp from "./signUp";
+import MenuList from "@material-ui/core/MenuList";
 import SignIn from "./signIn";
 import MyInfoPage from "./myInfoPage";
 import ApproveCamp from "./approveCamp";
+import MyPage from "./myPage";
+import BoardPage from "./boardPage";
 import AddCamp from "./addCamp";
 import ShowReservation from "./showReservation";
 import Checkout from "./reservation";
@@ -18,13 +24,13 @@ import Reservation from "./reservation";
 import app from "./firebase";
 import { AuthProvider, AuthContext } from "./auth";
 import Divider from "@material-ui/core/Divider";
-import { makeStyles, withStyles } from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/core/styles";
 import BackgroundImage from "./backgroundImage";
 import GridContainer from "./gridContainer.js";
 import GridItem from "./gridItem.js";
-import Menu from "@material-ui/core/Menu";
+import ClickAwayListener from "@material-ui/core/ClickAwayListener";
 import MenuItem from "@material-ui/core/MenuItem";
-import Test from "./indexPageDeprecated";
+import Test from "./cloudFunctionTestPage";
 import {
   BrowserRouter as Router,
   Switch,
@@ -38,25 +44,14 @@ const useStyles = makeStyles((theme) => ({
     color: "#FFFFFF",
     paddingRight: "15px",
     paddingLeft: "15px",
+    // paddingBottom: "200px",
     marginRight: "auto",
     marginLeft: "auto",
     width: "100%",
-    "@media (min-width: 576px)": {
-      maxWidth: "540px",
-    },
-    "@media (min-width: 768px)": {
-      maxWidth: "720px",
-    },
-    "@media (min-width: 992px)": {
-      maxWidth: "960px",
-    },
-    "@media (min-width: 1200px)": {
-      maxWidth: "1140px",
-    },
   },
   title: {
     margin: "1.75rem 0 0.875rem",
-    fontWeight: "700",
+    fontWeight: "400",
     fontFamily: `"Jua", sans-serif`,
     display: "inline-block",
     position: "relative",
@@ -77,39 +72,9 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const StyledMenu = withStyles({
-  paper: {
-    border: "1px solid #d3d4d5",
-  },
-})((props) => (
-  <Menu
-    elevation={0}
-    getContentAnchorEl={null}
-    anchorOrigin={{
-      vertical: "bottom",
-      horizontal: "center",
-    }}
-    transformOrigin={{
-      vertical: "top",
-      horizontal: "center",
-    }}
-    {...props}
-  />
-));
-
-const StyledMenuItem = withStyles((theme) => ({
-  root: {
-    "&:hover": {
-      backgroundColor: "#0f4c8133",
-    },
-    "&:active": {
-      backgroundColor: "#0f4c8133",
-    },
-  },
-}))(MenuItem);
-
 const App = () => {
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const anchorRef = React.useRef(null);
 
   const classes = useStyles();
 
@@ -117,14 +82,15 @@ const App = () => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleClose = () => {
+  const handleClose = (event) => {
+    if (anchorRef.current && anchorRef.current.contains(event.target)) return;
     setAnchorEl(null);
   };
 
   return (
     <AuthProvider>
       <Router>
-        <div className="responsive_nav">
+        <header className="responsive_nav">
           <nav className="navbar">
             <div className="navbar__logo">
               <NavLink exact to="/">
@@ -142,68 +108,105 @@ const App = () => {
                 <NavLink to="/showReservation">예약확인</NavLink>
               </li>
               <li>
-                <NavLink to="/reservation">게시판</NavLink>
+                <NavLink to="/boardPage">게시판</NavLink>
               </li>
               <li>
-                <NavLink to="/checkout">마이페이지</NavLink>
+                <NavLink to="/myPage">마이페이지</NavLink>
               </li>
               <AuthContext.Consumer>
                 {({ currentUser, userInfo }) => {
                   if (currentUser && userInfo.admin === true) {
                     return (
-                      <div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "center",
+                        }}
+                      >
                         <li>
                           {userInfo.rootAdmin === false ? (
                             <NavLink to="/addCamp">관리자페이지</NavLink>
                           ) : (
-                              <NavLink to="/addCamp" onClick={handleClick}>
+                            <div>
+                              <span
+                                ref={anchorRef}
+                                onClick={handleClick}
+                                style={{
+                                  fontSize: "20px",
+                                  cursor: "pointer",
+                                  display: "block",
+                                  padding: "8px 35px",
+                                }}
+                              >
                                 관리자페이지
-                              </NavLink>
-                            )}
-                        </li>
-                        {userInfo.rootAdmin === true ? (
-                          <StyledMenu
-                            id="customized-menu"
-                            anchorEl={anchorEl}
-                            keepMounted
-                            open={Boolean(anchorEl)}
-                            onClose={handleClose}
-                          >
-                            <StyledMenuItem
-                              id="fistSmallMenu"
-                              style={{
-                                padding: 0,
-                              }}
-                            >
-                              <NavLink
-                                to="/addCamp"
-                                style={{
-                                  padding: "6px 16px",
-                                  display: "inline-block",
-                                }}
+                              </span>
+
+                              <Popper
+                                open={Boolean(anchorEl)}
+                                anchorEl={anchorRef.current}
+                                role={undefined}
+                                transition
+                                disablePortal
                               >
-                                부대 관리
-                              </NavLink>
-                            </StyledMenuItem>
-                            <StyledMenuItem
-                              style={{
-                                padding: 0,
-                              }}
-                            >
-                              <NavLink
-                                to="/approveCamp"
-                                style={{
-                                  padding: "6px 16px",
-                                  display: "inline-block",
-                                }}
-                              >
-                                관리자 승인
-                              </NavLink>
-                            </StyledMenuItem>
-                          </StyledMenu>
-                        ) : (
-                            <span></span>
+                                {({ TransitionProps, placement }) => (
+                                  <Grow
+                                    {...TransitionProps}
+                                    style={{
+                                      transformOrigin:
+                                        placement === "bottom"
+                                          ? "center top"
+                                          : "center bottom",
+                                    }}
+                                  >
+                                    <Paper>
+                                      <ClickAwayListener
+                                        onClickAway={handleClose}
+                                      >
+                                        <MenuList>
+                                          <MenuItem
+                                            onClick={handleClose}
+                                            style={{
+                                              fontFamily: [
+                                                "Jua",
+                                                '"sans-serif"',
+                                              ],
+                                              padding: 0,
+                                            }}
+                                          >
+                                            <NavLink
+                                              to="/addCamp"
+                                              onClick={handleClose}
+                                            >
+                                              부대 관리
+                                            </NavLink>
+                                          </MenuItem>
+                                          <MenuItem
+                                            onClick={handleClose}
+                                            style={{
+                                              fontFamily: [
+                                                "Jua",
+                                                '"sans-serif"',
+                                              ],
+                                              padding: 0,
+                                            }}
+                                          >
+                                            <NavLink
+                                              to="/approveCamp"
+                                              onClick={handleClose}
+                                            >
+                                              관리자 승인
+                                            </NavLink>
+                                          </MenuItem>
+                                        </MenuList>
+                                      </ClickAwayListener>
+                                    </Paper>
+                                  </Grow>
+                                )}
+                              </Popper>
+                            </div>
                           )}
+                        </li>
                       </div>
                     );
                   }
@@ -219,8 +222,8 @@ const App = () => {
                     currentUser ? (
                       <NavLink to="/myInfoPage">&nbsp;내정보</NavLink>
                     ) : (
-                        <NavLink to="/signUp">&nbsp;회원가입</NavLink>
-                      )
+                      <NavLink to="/signUp">&nbsp;회원가입</NavLink>
+                    )
                   }
                 </AuthContext.Consumer>
               </li>
@@ -240,34 +243,34 @@ const App = () => {
                       </NavLink>
                     </li>
                   ) : (
-                      <li>
-                        <Login />
-                        <NavLink to="/login">&nbsp;로그인</NavLink>
-                      </li>
-                    )
+                    <li>
+                      <Login />
+                      <NavLink to="/login">&nbsp;로그인</NavLink>
+                    </li>
+                  )
                 }
               </AuthContext.Consumer>
             </ul>
             <Bars />
           </nav>
-        </div>
+        </header>
         <Divider />
 
         <Switch>
           <Route exact path="/">
             <div className={classes.realRoot}>
-              <BackgroundImage filter image={require("./assets/bg.jpg")}>
+              <BackgroundImage filter image={require("./assets/tennisHD.jpg")}>
                 <div className={classes.container}>
-                  <GridContainer>
+                  <GridContainer style={{ justifyContent: "center" }}>
                     <GridItem xs={12} sm={12} md={6}>
                       <h1 className={classes.title}>
                         국군장병들의 건강한 체육활동을 위하여
                       </h1>
-                      <h4>
+                      <h2 style={{ fontWeight: "300" }}>
                         간부 병 상관없이 누구나 확률적으로 즐길수있는 공정한
                         체육시설예약체계 각 부대에서 있는 체육대회에도 많은 관심
                         부탁드립니다.
-                      </h4>
+                      </h2>
                     </GridItem>
                   </GridContainer>
                 </div>
@@ -305,14 +308,18 @@ const App = () => {
 
           <Route path="/login" component={SignIn} />
 
+          <Route path="/boardPage" component={BoardPage} />
+
           <Route path="/myInfoPage" component={MyInfoPage} />
+
+          <Route path="/myPage" component={MyPage} />
 
           <Route path="/test" component={Test} />
 
           <Route
             path="/approveCamp"
             component={ApproveCamp}
-          // render={() => <AddFacility user={currentUser} />}
+            // render={() => <AddFacility user={currentUser} />}
           />
 
           <PrivateRoute path="/addCamp" component={AddCamp} />

@@ -30,8 +30,8 @@ const useStyles = makeStyles((theme) => ({
   },
   layout: {
     width: "auto",
-    marginLeft: theme.spacing(2),
-    marginRight: theme.spacing(2),
+    marginLeft: theme.spacing(1),
+    marginRight: theme.spacing(1),
     [theme.breakpoints.up(1000 + theme.spacing(2) * 2)]: {
       width: 1000,
       marginLeft: "auto",
@@ -182,7 +182,7 @@ export default function Checkout() {
                 .doc(selectedFacility)
                 .collection("reservation")
                 .add({ start, end, uid: user.uid, title: restInfo.title });
-            } else setSnackbar(true)
+            } else setSnackbar(true);
 
             await setVisitCheck(1);
           }
@@ -225,7 +225,10 @@ export default function Checkout() {
           </div>
           <div className={classes.layout}>
             <Paper className={classes.paper}>
-              <Typography component="h1" variant="h4" align="center"
+              <Typography
+                component="h1"
+                variant="h4"
+                align="center"
                 style={{
                   fontFamily: ["Jua", '"sans-serif"'],
                 }}
@@ -235,7 +238,7 @@ export default function Checkout() {
               <Stepper activeStep={activeStep} className={classes.stepper}>
                 {steps.map((label) => (
                   <Step key={label}>
-                    <StepLabel id='checkwhere'>{label}</StepLabel>
+                    <StepLabel>{label}</StepLabel>
                   </Step>
                 ))}
               </Stepper>
@@ -258,13 +261,15 @@ export default function Checkout() {
               <React.Fragment>
                 {activeStep === steps.length ? (
                   <React.Fragment>
-                    <Typography variant="h5" gutterBottom
+                    <Typography
+                      variant="h5"
+                      gutterBottom
                       style={{
                         fontFamily: ["Jua", '"sans-serif"'],
                       }}
                     >
                       체육시설 예약이 정상적으로 처리되었습니다.
-                  </Typography>
+                    </Typography>
                     <Box boxShadow={1}>
                       <Typography className={classes.table} variant="subtitle1">
                         <TableContainer component={Paper}>
@@ -306,39 +311,39 @@ export default function Checkout() {
                       </Typography>
                     </Box>
                     <Typography variant="subtitle1">
-                      신청하신 예약은 마이페이지 또는 예약환인 탭에서 조회하실 수
-                      있습니다.
-                  </Typography>
+                      신청하신 예약은 마이페이지 또는 예약환인 탭에서 조회하실
+                      수 있습니다.
+                    </Typography>
                   </React.Fragment>
                 ) : (
-                    <React.Fragment>
-                      {getStepContent(activeStep)}
-                      {activeStep !== 0 && (
-                        <div className={classes.buttons}>
+                  <React.Fragment>
+                    {getStepContent(activeStep)}
+                    {activeStep !== 0 && (
+                      <div className={classes.buttons}>
+                        <Button
+                          variant="contained"
+                          onClick={handleBack}
+                          className={classes.button}
+                        >
+                          이전
+                        </Button>
+
+                        {activeStep === steps.length - 1 && (
                           <Button
                             variant="contained"
-                            onClick={handleBack}
+                            color="primary"
+                            onClick={handleNext}
                             className={classes.button}
                           >
-                            이전
-                      </Button>
-
-                          {activeStep === steps.length - 1 && (
-                            <Button
-                              variant="contained"
-                              color="primary"
-                              onClick={handleNext}
-                              className={classes.button}
-                            >
-                              {activeStep === steps.length - 1
-                                ? "예약하기"
-                                : "다음"}
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                    </React.Fragment>
-                  )}
+                            {activeStep === steps.length - 1
+                              ? "예약하기"
+                              : "다음"}
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </React.Fragment>
+                )}
               </React.Fragment>
             </Paper>
           </div>

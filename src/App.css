@@ -30,11 +30,24 @@ a {
   color: red;
   margin: 0px;
 }
+
 .responsive_nav {
+  /* text-align: center;
+  background-color: #fafafa;
+  padding: 10px;
+  padding-bottom: 0px;
+  position: sticky;
+  top: 0px;
+  width: 100%;
+  max-width: 80rem;
+  display:flex;
+  justify-content: center;
+   */
+  position: relative;
+  top: 0;
   width: 100%;
   margin: 0 auto;
   max-width: 80rem;
-  position: relative;
   /* background-color: var(--background-color); */
 }
 .responsive_nav:before {

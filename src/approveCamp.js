@@ -29,9 +29,10 @@ import HourglassEmptyIcon from "@material-ui/icons/HourglassEmpty";
 const useStyles = makeStyles((theme) => ({
   heroContent: {
     backgroundColor: theme.palette.background.paper,
-    padding: theme.spacing(3, 0, 6),
+    padding: theme.spacing(7, 0, 10),
   },
   root: {
+    backgroundColor: "#fafafa",
     width: 500,
   },
   navigationStyle: {
@@ -295,6 +296,10 @@ const AddCamp = () => {
                 관리자들이 신청한 부대를 승인한다면 실제 사용자들이 바로 예약을
                 진행할 수 있습니다.
               </Typography> */}
+            </Container>
+          </div>
+          <div>
+            <Container>
               <div className={classes.heroButtons}>
                 <Grid container spacing={2} justify="center">
                   <BottomNavigation
@@ -336,31 +341,31 @@ const AddCamp = () => {
                     승인 대기중인 추가될 부대가 없습니다.
                   </Typography>
                 ) : (
-                    camps.map((camp) => (
-                      <Grid item key={camp.camp} xs={12} sm={6} md={4}>
-                        <Card className={classes.card}>
-                          <CardContent className={classes.cardContent}>
-                            <Typography
-                              variant="h5"
-                              component="h2"
-                              className={classes.typography}
-                            >
-                              {camp.camp}
-                            </Typography>
-                          </CardContent>
-                          <CardActions className={classes.cardButton}>
-                            <Button
-                              value={camp.camp}
-                              color="primary"
-                              onClick={() => showFacility(camp)}
-                            >
-                              승인 / 미승인
+                  camps.map((camp) => (
+                    <Grid item key={camp.camp} xs={12} sm={6} md={4}>
+                      <Card className={classes.card}>
+                        <CardContent className={classes.cardContent}>
+                          <Typography
+                            variant="h5"
+                            component="h2"
+                            className={classes.typography}
+                          >
+                            {camp.camp}
+                          </Typography>
+                        </CardContent>
+                        <CardActions className={classes.cardButton}>
+                          <Button
+                            value={camp.camp}
+                            color="primary"
+                            onClick={() => showFacility(camp)}
+                          >
+                            승인 / 미승인
                           </Button>
-                          </CardActions>
-                        </Card>
-                      </Grid>
-                    ))
-                  )}
+                        </CardActions>
+                      </Card>
+                    </Grid>
+                  ))
+                )}
 
                 <Modal
                   className={classes.modal}
@@ -482,8 +487,8 @@ const AddCamp = () => {
               </Grid>
             </Container>
           ) : (
-              <div>asd</div>
-            )}
+            <div>asd</div>
+          )}
         </main>
         <footer className={classes.footer}>
           <Typography
