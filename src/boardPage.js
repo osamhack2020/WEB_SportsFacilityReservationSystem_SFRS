@@ -23,7 +23,6 @@ import Snackbar from "@material-ui/core/Snackbar";
 import moment from "moment";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import IconButton from "@material-ui/core/IconButton";
-import TextField from "@material-ui/core/TextField";
 
 const useStyles = makeStyles((theme) => ({
   breadcrumbs: {
@@ -56,8 +55,10 @@ const useStyles = makeStyles((theme) => ({
   },
   tableHead: {
     color: theme.palette.common.white,
+    fontFamily: ["Jua", '"sans-serif"'],
   },
   tableBody: {
+    fontFamily: ["Jua", '"sans-serif"'],
     backgroundColor: "#fafafa",
   },
   tableCell: {
@@ -110,8 +111,12 @@ const useStyles = makeStyles((theme) => ({
     marginTop: "auto",
   },
   buttons: {
+    marginTop: "16px",
     display: "flex",
     justifyContent: "space-between",
+  },
+  button: {
+    marginLeft: theme.spacing(1),
   },
   papers: {
     "@media (min-width: 600px)": {
@@ -151,10 +156,13 @@ const BoardPage = () => {
   const [userData, setUserData] = React.useState("");
   const [content, setContent] = React.useState("");
   const [boardContent, setBoardContent] = React.useState([]);
+  const [adminBoardContent, setAdminBoardContent] = React.useState([]);
   const [openProgress, setOpenProgress] = React.useState(false);
   const [snackbar, setSnackbar] = React.useState(false);
   const [boardCount, setBoardCount] = React.useState(0);
   const [showMoreButton, setShowMoreButton] = React.useState(true);
+  const [isUserAdmin, setIsUserAdmin] = React.useState(false);
+  const [openAdminModal, setOpenAdminModal] = React.useState(false);
 
   const handleChange = async () => {
     const lastContent = boardContent[boardContent.length - 1].writeDate;
@@ -185,6 +193,7 @@ const BoardPage = () => {
     setTitle("");
     setTitleError(false);
     setOpenModal(false);
+    setOpenAdminModal(false);
   };
 
   const modalCloseAndUpdate = async () => {
@@ -192,11 +201,13 @@ const BoardPage = () => {
     setTitle("");
     setTitleError(false);
     setOpenModal(false);
+    setOpenAdminModal(false);
 
     setBoardContent([]);
     await app
       .firestore()
       .collection("board")
+      .where("adminWrite", "==", false)
       .orderBy("writeDate", "desc")
       .limit(10)
       .get()
@@ -212,9 +223,31 @@ const BoardPage = () => {
           ]);
         });
       });
+    setShowMoreButton(true);
+
+    setAdminBoardContent([]);
+    await app
+      .firestore()
+      .collection("board")
+      .where("adminWrite", "==", true)
+      .orderBy("writeDate", "desc")
+      .limit(10)
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setAdminBoardContent((oldArray) => [
+            ...oldArray,
+            {
+              title: doc.data().title,
+              writer: doc.data().writer,
+              writeDate: doc.data().writeDate,
+            },
+          ]);
+        });
+      });
   };
 
-  const addBoard = () => {
+  const addBoard = (isAdminWrite) => {
     setOpenProgress(true);
     setTitleError(false);
     setContentError(false);
@@ -230,18 +263,23 @@ const BoardPage = () => {
         writer: userData,
         title,
         content,
+        adminWrite: isAdminWrite,
       });
 
-      app
-        .firestore()
-        .collection("board")
-        .doc("count")
-        .update({ count: boardCount });
+      if (!isAdminWrite) {
+        app
+          .firestore()
+          .collection("board")
+          .doc("count")
+          .update({ count: boardCount });
+
+        setBoardCount(boardCount + 1);
+      }
 
       setSnackbar(true);
       setTimeout(() => {
         modalCloseAndUpdate();
-      }, 1400);
+      }, 1100);
     }
   };
 
@@ -253,17 +291,39 @@ const BoardPage = () => {
       .get()
       .then((snapshot) => {
         setBoardCount(snapshot.data().count + 1);
+        if (snapshot.data().count === 0) setShowMoreButton(false);
       });
 
     app
       .firestore()
       .collection("board")
+      .where("adminWrite", "==", false)
       .orderBy("writeDate", "desc")
       .limit(10)
       .get()
       .then((snapshot) => {
         snapshot.forEach((doc) => {
           setBoardContent((oldArray) => [
+            ...oldArray,
+            {
+              title: doc.data().title,
+              writer: doc.data().writer,
+              writeDate: doc.data().writeDate,
+            },
+          ]);
+        });
+      });
+
+    app
+      .firestore()
+      .collection("board")
+      .where("adminWrite", "==", true)
+      .orderBy("writeDate", "desc")
+      .limit(10)
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setAdminBoardContent((oldArray) => [
             ...oldArray,
             {
               title: doc.data().title,
@@ -284,6 +344,7 @@ const BoardPage = () => {
           .get()
           .then((snapshot) => {
             snapshot.forEach((doc) => {
+              if (doc.data().admin) setIsUserAdmin(true);
               setUserData(
                 `${doc.data().military} ${doc.data().rank} ${doc.data().name}`
               );
@@ -331,7 +392,17 @@ const BoardPage = () => {
         </div>
         <div className={classes.layout}>
           <div className={classes.buttons}>
-            <TextField label="게시물 검색" variant="outlined" />
+            {isUserAdmin ? (
+              <Button
+                // variant="contained"
+                color="secondary"
+                onClick={() => setOpenAdminModal(true)}
+              >
+                관리자 글쓰기
+              </Button>
+            ) : (
+              <div></div>
+            )}
             {showAddButton ? (
               <Button
                 variant="contained"
@@ -346,7 +417,7 @@ const BoardPage = () => {
           </div>
 
           <Paper className={classes.paper}>
-            <Table>
+            <Table className={classes.typography}>
               <TableHead className={classes.tableHead}>
                 <TableRow>
                   <TableCell>번호</TableCell>
@@ -356,9 +427,21 @@ const BoardPage = () => {
                 </TableRow>
               </TableHead>
               <TableBody className={classes.tableBody}>
+                {adminBoardContent.map((content, index) => (
+                  <TableRow key={index}>
+                    <TableCell>공지</TableCell>
+                    <TableCell>{content.title}</TableCell>
+                    <TableCell>{content.writer}</TableCell>
+                    <TableCell>
+                      {moment(content.writeDate.toDate()).format(
+                        "YYYY/MM/DD hh:mm"
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
                 {boardContent.map((content, index) => (
                   <TableRow key={index}>
-                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{boardCount - 1 - index}</TableCell>
                     <TableCell>{content.title}</TableCell>
                     <TableCell>{content.writer}</TableCell>
                     <TableCell>
@@ -474,10 +557,130 @@ const BoardPage = () => {
                     </TableBody>
                   </Table>
                 </TableContainer>
+                <span className={classes.modalButtons}>
+                  <Button
+                    onClick={() => addBoard(false)}
+                    variant="contained"
+                    color="primary"
+                    className={classes.button}
+                  >
+                    확인
+                  </Button>
+                  <Backdrop className={classes.backdrop} open={openProgress}>
+                    <CircularProgress color="inherit" />
+                  </Backdrop>
+                  <Snackbar
+                    autoHideDuration={2000}
+                    open={snackbar}
+                    onClose={() => setSnackbar(false)}
+                    TransitionComponent={Slide}
+                    message="글이 등록되었습니다."
+                  />
+                  <Button
+                    onClick={modalClose}
+                    variant="contained"
+                    color="secondary"
+                    className={classes.button}
+                  >
+                    닫기
+                  </Button>
+                </span>
+              </Container>
+            </div>
+          </Slide>
+        </Modal>
+
+        <Modal
+          className={classes.modal}
+          open={openAdminModal}
+          onClose={modalClose}
+          closeAfterTransition
+          BackdropComponent={Backdrop}
+          BackdropProps={{
+            timeout: 500,
+          }}
+        >
+          <Slide direction="up" in={openAdminModal}>
+            <div className={classes.papers}>
+              <Container component="main" maxWidth="md">
+                <Typography className={classes.modalTypography}>
+                  관리자 글쓰기
+                </Typography>
+                <TableContainer
+                  component={Paper}
+                  className={classes.tableContainer}
+                >
+                  <Table>
+                    <TableBody>
+                      <TableRow key="title">
+                        <TableCell
+                          component="th"
+                          scope="row"
+                          className={classes.tableRow}
+                        >
+                          제목
+                        </TableCell>
+                        <th
+                          style={{
+                            borderBottom: "1px solid rgba(224, 224, 224, 1)",
+                          }}
+                        >
+                          <FormControl fullWidth error={titleError}>
+                            <Input
+                              value={title}
+                              onChange={({ target: { value } }) =>
+                                setTitle(value)
+                              }
+                              type="text"
+                              className={classes.textField}
+                              placeholder="제목을 입력하십시오."
+                            />
+                          </FormControl>
+                        </th>
+                      </TableRow>
+                      <TableRow key="writerName">
+                        <TableCell
+                          component="th"
+                          scope="row"
+                          className={classes.tableRow}
+                        >
+                          작성자
+                        </TableCell>
+                        <TableCell align="left" className={classes.tableCell}>
+                          관리자
+                        </TableCell>
+                      </TableRow>
+                      <TableRow key="content">
+                        <TableCell
+                          component="th"
+                          scope="row"
+                          className={classes.tableRow}
+                        >
+                          내용
+                        </TableCell>
+                        <th>
+                          <FormControl fullWidth error={contentError}>
+                            <Input
+                              value={content}
+                              onChange={({ target: { value } }) =>
+                                setContent(value)
+                              }
+                              multiline
+                              rows={4}
+                              type="text"
+                              className={classes.textField}
+                              placeholder="내용을 입력하십시오."
+                            />
+                          </FormControl>
+                        </th>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
 
                 <span className={classes.modalButtons}>
                   <Button
-                    onClick={addBoard}
+                    onClick={() => addBoard(true)}
                     variant="contained"
                     color="primary"
                     className={classes.button}
