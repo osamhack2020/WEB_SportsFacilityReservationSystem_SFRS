@@ -10,6 +10,13 @@ import BottomNavigation from "@material-ui/core/BottomNavigation";
 import BottomNavigationAction from "@material-ui/core/BottomNavigationAction";
 import SportsTennisIcon from "@material-ui/icons/SportsTennis";
 import SportsHandballIcon from "@material-ui/icons/SportsHandball";
+import moment from "moment";
+import TableCell from "@material-ui/core/TableCell";
+import Table from "@material-ui/core/Table";
+import TableHead from "@material-ui/core/TableHead";
+import TableBody from "@material-ui/core/TableBody";
+import Paper from "@material-ui/core/Paper";
+import TableRow from "@material-ui/core/TableRow";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -148,6 +155,7 @@ const useStyles = makeStyles((theme) => ({
 const AddCamp = () => {
   const classes = useStyles();
   const [value, setValue] = React.useState("1");
+  const [futureReservation, setFutureReservation] = React.useState([]);
 
   React.useEffect(() => {
     app.auth().onAuthStateChanged(async (user) => {
@@ -155,12 +163,32 @@ const AddCamp = () => {
         app
           .firestore()
           .collectionGroup("reservation")
+          // .where(
+          //   "end",
+          //   "<",
+          //   new Date(moment().startOf("day").toDate().getTime())
+          // )
           .where("uid", "==", user.uid)
           .get()
           .then((snapshot) => {
             snapshot.forEach((doc) => {
-              console.log(doc.data());
-              console.log(doc.id);
+              if (
+                doc.data().end.seconds <
+                moment().add(2, "days").startOf("day").toDate().getTime() / 1000
+              ) {
+                setFutureReservation((oldArray) => [
+                  ...oldArray,
+                  {
+                    key: doc.id,
+                    camp: doc.data().camp,
+                    facility: doc.data().facility,
+                    title: doc.data().title,
+                    uid: doc.data().uid,
+                    start: doc.data().start,
+                    end: doc.data().end,
+                  },
+                ]);
+              }
             });
           });
       }
@@ -234,9 +262,42 @@ const AddCamp = () => {
             </Container>
           </div>
           {value === "1" ? (
-            <Container className={classes.cardGrid} maxWidth="md">
-              <Grid container spacing={4}></Grid>
-            </Container>
+            <Paper className={classes.paper}>
+              <Table className={classes.typography}>
+                <TableHead className={classes.tableHead}>
+                  <TableRow>
+                    <TableCell>번호</TableCell>
+                    <TableCell>제목</TableCell>
+                    <TableCell>부대</TableCell>
+                    <TableCell>체육시설</TableCell>
+                    <TableCell>시작시간</TableCell>
+                    <TableCell>종료시간</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody className={classes.tableBody}>
+                  {futureReservation.map((content, index) => (
+                    <TableRow
+                      key={content.key}
+                      hover
+                      // onClick={() => showMoreContent(content.key)}
+                    >
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{content.title}</TableCell>
+                      <TableCell>{content.camp}</TableCell>
+                      <TableCell>{content.facility}</TableCell>
+                      <TableCell>
+                        {moment(content.start.toDate()).format(
+                          "YYYY/MM/DD hh:mm"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {moment(content.end.toDate()).format("YYYY/MM/DD hh")}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Paper>
           ) : (
             <Container className={classes.cardGrid} maxWidth="md">
               <Grid container spacing={4}></Grid>

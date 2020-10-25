@@ -24,8 +24,8 @@ const useStyles = makeStyles((theme) => ({
     width: "auto",
     marginLeft: theme.spacing(1),
     marginRight: theme.spacing(1),
-    [theme.breakpoints.up(1000 + theme.spacing(2) * 2)]: {
-      width: 1000,
+    [theme.breakpoints.up(1100 + theme.spacing(2) * 2)]: {
+      width: 1100,
       marginLeft: "auto",
       marginRight: "auto",
     },
@@ -44,7 +44,7 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(3),
     marginBottom: theme.spacing(3),
     padding: theme.spacing(2),
-    [theme.breakpoints.up(1000 + theme.spacing(3) * 2)]: {
+    [theme.breakpoints.up(1100 + theme.spacing(3) * 2)]: {
       marginTop: theme.spacing(6),
       marginBottom: theme.spacing(6),
       padding: theme.spacing(3),

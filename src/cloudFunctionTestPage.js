@@ -60,7 +60,7 @@ const Test = () => {
       .collection("camp")
       .doc("1함대")
       .collection("facility")
-      .doc("축구장")
+      .doc("풋살장")
       .collection("reservation")
       .where("end", ">=", new Date(startTime))
       .where("end", "<=", new Date(endTime))
@@ -100,7 +100,7 @@ const Test = () => {
         temp.push(array[i].title);
       }
     }
-
+    console.log(temp);
     setMaxScheduleCandidate((oldArray) => [...oldArray, temp]);
     setMaxScheduleCount(temp.length);
   };
@@ -172,6 +172,8 @@ const Test = () => {
     }
 
     setUniqueMaxSchedule(realUniqueArray);
+    console.log(realUniqueArray);
+    console.log(uniqueMaxSchedule);
   };
 
   return (

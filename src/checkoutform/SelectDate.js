@@ -80,7 +80,6 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-
 const SelectDate = ({ camp, facility, save, isView }) => {
   const classes = useStyles();
 
@@ -90,8 +89,8 @@ const SelectDate = ({ camp, facility, save, isView }) => {
   const [minTime, setMinTime] = React.useState(Date.now());
   const [maxTime, setMaxTime] = React.useState(Date.now());
   const [open, setOpen] = React.useState(false);
-  const [reservationTitle, setReservationTitle] = React.useState('');
-  const [reservationTitleError, setReservationTitleError] = React.useState('');
+  const [reservationTitle, setReservationTitle] = React.useState("");
+  const [reservationTitleError, setReservationTitleError] = React.useState("");
   const [start, setStart] = React.useState(0);
   const [end, setEnd] = React.useState(0);
   const [userData, setUserData] = React.useState({});
@@ -184,38 +183,39 @@ const SelectDate = ({ camp, facility, save, isView }) => {
   };
 
   const handleSelect = async ({ start, end }) => {
-    setReservationTitleError('')
-    setStart(start)
-    setEnd(end)
+    setReservationTitleError("");
+    setStart(start);
+    setEnd(end);
     const today = new Date().getDate();
 
     if (today + 1 <= start.getDate()) {
       if (start.getDate() === end.getDate()) {
         if (count === 0) {
           setOpen(true);
-          // const title = window.prompt("예약목적을 작성해주십시오.");
         }
       }
-    } else setSnackbarOpen(true)
-
+    } else setSnackbarOpen(true);
   };
 
   const addReservationTitle = () => {
-    if (reservationTitle !== '') {
-      setEvents((oldArray) => [...oldArray, { start, end, title: reservationTitle }]);
+    if (reservationTitle !== "") {
+      setEvents((oldArray) => [
+        ...oldArray,
+        { start, end, title: reservationTitle },
+      ]);
       save({ start: start, end: end, title: reservationTitle });
       setCount(1);
-      setOpen(false)
+      setOpen(false);
     } else {
-      setStart(0)
-      setEnd(0)
-      setReservationTitleError(1)
+      setStart(0);
+      setEnd(0);
+      setReservationTitleError(1);
     }
-  }
+  };
 
   const handleClose = () => {
-    setReservationTitle('')
-    setReservationTitleError('')
+    setReservationTitle("");
+    setReservationTitleError("");
     setOpen(false);
   };
 
@@ -234,21 +234,31 @@ const SelectDate = ({ camp, facility, save, isView }) => {
       );
   };
 
-  const doNothing = () => { }
+  const doNothing = () => {};
 
   const clickEvent = async (event) => {
-    await app.firestore().collection("users").where('uid', '==', event.uid).get().then(snapshot => {
-      snapshot.forEach(doc => {
-        setUserData({ ...doc.data(), title: event.title, start: event.start, end: event.end })
+    await app
+      .firestore()
+      .collection("users")
+      .where("uid", "==", event.uid)
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setUserData({
+            ...doc.data(),
+            title: event.title,
+            start: event.start,
+            end: event.end,
+          });
+        });
       });
-    })
 
-    setUserDataOpen(true)
-  }
+    setUserDataOpen(true);
+  };
 
   const closeUserData = () => {
-    setUserDataOpen(false)
-  }
+    setUserDataOpen(false);
+  };
 
   return (
     <div>
@@ -271,7 +281,6 @@ const SelectDate = ({ camp, facility, save, isView }) => {
         TransitionComponent={Slide}
         message="오늘로부터 하루지난 예약만 가능합니다."
       />
-
 
       <Modal
         className={classes.modal}
@@ -320,7 +329,11 @@ const SelectDate = ({ camp, facility, save, isView }) => {
                         scope="row"
                         className={classes.tableCell}
                       >
-                        {userData.military + ' ' + userData.rank + ' ' + userData.name}
+                        {userData.military +
+                          " " +
+                          userData.rank +
+                          " " +
+                          userData.name}
                       </TableCell>
                     </TableRow>
                     <TableRow key="3">
@@ -384,10 +397,9 @@ const SelectDate = ({ camp, facility, save, isView }) => {
                         scope="row"
                         className={classes.tableCell}
                       >
-                        {camp + ' ' + facility}
+                        {camp + " " + facility}
                       </TableCell>
                     </TableRow>
-
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -418,7 +430,7 @@ const SelectDate = ({ camp, facility, save, isView }) => {
             <Container component="main" maxWidth="md">
               <Typography className={classes.modalTypography}>
                 체육시설 예약 추가정보
-                        </Typography>
+              </Typography>
               <TableContainer
                 component={Paper}
                 className={classes.tableContainer}
@@ -436,9 +448,7 @@ const SelectDate = ({ camp, facility, save, isView }) => {
                       <th>
                         <FormControl
                           fullWidth
-                          error={
-                            reservationTitleError === "" ? false : true
-                          }
+                          error={reservationTitleError === "" ? false : true}
                         >
                           <Input
                             value={reservationTitle}
@@ -452,7 +462,6 @@ const SelectDate = ({ camp, facility, save, isView }) => {
                         </FormControl>
                       </th>
                     </TableRow>
-
                   </TableBody>
                 </Table>
               </TableContainer>
