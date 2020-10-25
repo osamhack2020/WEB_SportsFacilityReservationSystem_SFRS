@@ -23,6 +23,7 @@ import Snackbar from "@material-ui/core/Snackbar";
 import moment from "moment";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import IconButton from "@material-ui/core/IconButton";
+import NotificationsIcon from "@material-ui/icons/Notifications";
 
 const useStyles = makeStyles((theme) => ({
   breadcrumbs: {
@@ -163,12 +164,19 @@ const BoardPage = () => {
   const [showMoreButton, setShowMoreButton] = React.useState(true);
   const [isUserAdmin, setIsUserAdmin] = React.useState(false);
   const [openAdminModal, setOpenAdminModal] = React.useState(false);
+  const [openContentModal, setOpenContentModal] = React.useState(false);
+  const [modalContent, setModalContent] = React.useState([]);
+  const [userId, setUserId] = React.useState("");
+  const [isModify, setIsModify] = React.useState(false);
+  const [modifySuccessSB, setModifySuccessSB] = React.useState(false);
+  const [deleteSuccessSB, setDeleteSuccessSB] = React.useState(false);
 
-  const handleChange = async () => {
+  const showMore = async () => {
     const lastContent = boardContent[boardContent.length - 1].writeDate;
     await app
       .firestore()
       .collection("board")
+      .where("adminWrite", "==", false)
       .orderBy("writeDate", "desc")
       .startAfter(lastContent)
       .limit(10)
@@ -179,13 +187,15 @@ const BoardPage = () => {
             ...oldArray,
             {
               title: doc.data().title,
+              key: doc.id,
               writer: doc.data().writer,
               writeDate: doc.data().writeDate,
             },
           ]);
         });
       });
-    if (boardContent.length + 10 >= boardCount - 1) setShowMoreButton(false);
+
+    if (boardContent.length + 10 >= boardCount) setShowMoreButton(false);
   };
 
   const modalClose = () => {
@@ -194,17 +204,28 @@ const BoardPage = () => {
     setTitleError(false);
     setOpenModal(false);
     setOpenAdminModal(false);
+    setOpenContentModal(false);
   };
 
-  const modalCloseAndUpdate = async () => {
-    setContent("");
-    setTitle("");
-    setTitleError(false);
-    setOpenModal(false);
-    setOpenAdminModal(false);
+  const modalCloseAndUpdate = () => {
+    modalClose();
+
+    app
+      .firestore()
+      .collection("board")
+      .where("adminWrite", "==", false)
+      .get()
+      .then((snapshot) => {
+        let count = 0;
+        snapshot.forEach(() => {
+          count++;
+        });
+        setBoardCount(count);
+        if (count === 0) setShowMoreButton(false);
+      });
 
     setBoardContent([]);
-    await app
+    app
       .firestore()
       .collection("board")
       .where("adminWrite", "==", false)
@@ -216,6 +237,7 @@ const BoardPage = () => {
           setBoardContent((oldArray) => [
             ...oldArray,
             {
+              key: doc.id,
               title: doc.data().title,
               writer: doc.data().writer,
               writeDate: doc.data().writeDate,
@@ -226,7 +248,7 @@ const BoardPage = () => {
     setShowMoreButton(true);
 
     setAdminBoardContent([]);
-    await app
+    app
       .firestore()
       .collection("board")
       .where("adminWrite", "==", true)
@@ -238,6 +260,7 @@ const BoardPage = () => {
           setAdminBoardContent((oldArray) => [
             ...oldArray,
             {
+              key: doc.id,
               title: doc.data().title,
               writer: doc.data().writer,
               writeDate: doc.data().writeDate,
@@ -258,40 +281,86 @@ const BoardPage = () => {
     if (title === "") setTitleError(true);
     else if (content === "") setContentError(true);
     else {
-      app.firestore().collection("board").add({
-        writeDate: new Date(),
-        writer: userData,
-        title,
-        content,
-        adminWrite: isAdminWrite,
-      });
-
-      if (!isAdminWrite) {
+      if (isModify) {
         app
           .firestore()
           .collection("board")
-          .doc("count")
-          .update({ count: boardCount });
+          .doc(modalContent.documentId)
+          .update({ title, content, writeDate: new Date() });
 
-        setBoardCount(boardCount + 1);
+        setModifySuccessSB(true);
+      } else {
+        app.firestore().collection("board").add({
+          writeDate: new Date(),
+          writer: userData,
+          title,
+          content,
+          adminWrite: isAdminWrite,
+          userId: userId,
+        });
+
+        setSnackbar(true);
       }
 
-      setSnackbar(true);
       setTimeout(() => {
         modalCloseAndUpdate();
-      }, 1100);
+      }, 1200);
     }
+  };
+
+  const showMoreContent = (documentId) => {
+    app
+      .firestore()
+      .collection("board")
+      .doc(documentId)
+      .get()
+      .then((snapshot) => {
+        setModalContent({
+          title: snapshot.data().title,
+          writer: snapshot.data().adminWrite
+            ? "관리자"
+            : snapshot.data().writer,
+          writeDate: snapshot.data().writeDate,
+          content: snapshot.data().content,
+          adminWrite: snapshot.data().adminWrite,
+          userId: snapshot.data().userId,
+          documentId,
+        });
+
+        setOpenContentModal(true);
+      });
+  };
+
+  const modifyModal = (adminWrite) => {
+    setOpenContentModal(false);
+    setTitle(modalContent.title);
+    setContent(modalContent.content);
+    setIsModify(true);
+
+    if (adminWrite) setOpenAdminModal(true);
+    else setOpenModal(true);
+  };
+
+  const deleteModal = async (documentId) => {
+    await app.firestore().collection("board").doc(documentId).delete();
+
+    setDeleteSuccessSB(true);
+    modalCloseAndUpdate();
   };
 
   React.useEffect(() => {
     app
       .firestore()
       .collection("board")
-      .doc("count")
+      .where("adminWrite", "==", false)
       .get()
       .then((snapshot) => {
-        setBoardCount(snapshot.data().count + 1);
-        if (snapshot.data().count === 0) setShowMoreButton(false);
+        let count = 0;
+        snapshot.forEach(() => {
+          count++;
+        });
+        setBoardCount(count);
+        if (count === 0) setShowMoreButton(false);
       });
 
     app
@@ -309,6 +378,7 @@ const BoardPage = () => {
               title: doc.data().title,
               writer: doc.data().writer,
               writeDate: doc.data().writeDate,
+              key: doc.id,
             },
           ]);
         });
@@ -329,6 +399,7 @@ const BoardPage = () => {
               title: doc.data().title,
               writer: doc.data().writer,
               writeDate: doc.data().writeDate,
+              key: doc.id,
             },
           ]);
         });
@@ -345,6 +416,7 @@ const BoardPage = () => {
           .then((snapshot) => {
             snapshot.forEach((doc) => {
               if (doc.data().admin) setIsUserAdmin(true);
+              setUserId(user.uid);
               setUserData(
                 `${doc.data().military} ${doc.data().rank} ${doc.data().name}`
               );
@@ -427,11 +499,17 @@ const BoardPage = () => {
                 </TableRow>
               </TableHead>
               <TableBody className={classes.tableBody}>
-                {adminBoardContent.map((content, index) => (
-                  <TableRow key={index}>
-                    <TableCell>공지</TableCell>
+                {adminBoardContent.map((content) => (
+                  <TableRow
+                    key={content.key}
+                    hover
+                    onClick={() => showMoreContent(content.key)}
+                  >
+                    <TableCell style={{ paddingLeft: "11px" }}>
+                      <NotificationsIcon fontSize="small" />
+                    </TableCell>
                     <TableCell>{content.title}</TableCell>
-                    <TableCell>{content.writer}</TableCell>
+                    <TableCell>관리자</TableCell>
                     <TableCell>
                       {moment(content.writeDate.toDate()).format(
                         "YYYY/MM/DD hh:mm"
@@ -440,8 +518,12 @@ const BoardPage = () => {
                   </TableRow>
                 ))}
                 {boardContent.map((content, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{boardCount - 1 - index}</TableCell>
+                  <TableRow
+                    key={content.key}
+                    hover
+                    onClick={() => showMoreContent(content.key)}
+                  >
+                    <TableCell>{boardCount - index}</TableCell>
                     <TableCell>{content.title}</TableCell>
                     <TableCell>{content.writer}</TableCell>
                     <TableCell>
@@ -461,7 +543,7 @@ const BoardPage = () => {
               aria-label="upload picture"
               component="span"
               className={classes.modal}
-              onClick={handleChange}
+              onClick={showMore}
             >
               <ExpandMoreIcon style={{ fontSize: 40 }} />
             </IconButton>
@@ -469,7 +551,27 @@ const BoardPage = () => {
             <div></div>
           )}
         </div>
-
+        <Snackbar
+          autoHideDuration={1200}
+          open={snackbar}
+          onClose={() => setSnackbar(false)}
+          TransitionComponent={Slide}
+          message="글이 등록되었습니다."
+        />
+        <Snackbar
+          autoHideDuration={1200}
+          open={modifySuccessSB}
+          onClose={() => setModifySuccessSB(false)}
+          TransitionComponent={Slide}
+          message="글이 수정되었습니다."
+        />{" "}
+        <Snackbar
+          autoHideDuration={1200}
+          open={deleteSuccessSB}
+          onClose={() => setDeleteSuccessSB(false)}
+          TransitionComponent={Slide}
+          message="글이 삭제되었습니다."
+        />
         <Modal
           className={classes.modal}
           open={openModal}
@@ -569,13 +671,7 @@ const BoardPage = () => {
                   <Backdrop className={classes.backdrop} open={openProgress}>
                     <CircularProgress color="inherit" />
                   </Backdrop>
-                  <Snackbar
-                    autoHideDuration={2000}
-                    open={snackbar}
-                    onClose={() => setSnackbar(false)}
-                    TransitionComponent={Slide}
-                    message="글이 등록되었습니다."
-                  />
+
                   <Button
                     onClick={modalClose}
                     variant="contained"
@@ -589,7 +685,6 @@ const BoardPage = () => {
             </div>
           </Slide>
         </Modal>
-
         <Modal
           className={classes.modal}
           open={openAdminModal}
@@ -690,17 +785,107 @@ const BoardPage = () => {
                   <Backdrop className={classes.backdrop} open={openProgress}>
                     <CircularProgress color="inherit" />
                   </Backdrop>
-                  <Snackbar
-                    autoHideDuration={2000}
-                    open={snackbar}
-                    onClose={() => setSnackbar(false)}
-                    TransitionComponent={Slide}
-                    message="글이 등록되었습니다."
-                  />
                   <Button
                     onClick={modalClose}
                     variant="contained"
                     color="secondary"
+                    className={classes.button}
+                  >
+                    닫기
+                  </Button>
+                </span>
+              </Container>
+            </div>
+          </Slide>
+        </Modal>
+        <Modal
+          className={classes.modal}
+          open={openContentModal}
+          onClose={modalClose}
+          closeAfterTransition
+          BackdropComponent={Backdrop}
+          BackdropProps={{
+            timeout: 500,
+          }}
+        >
+          <Slide direction="up" in={openContentModal}>
+            <div className={classes.papers}>
+              <Container component="main" maxWidth="md">
+                <Typography className={classes.modalTypography}>
+                  자유게시판
+                </Typography>
+                <TableContainer
+                  component={Paper}
+                  className={classes.tableContainer}
+                >
+                  <Table>
+                    <TableBody>
+                      <TableRow key="title">
+                        <TableCell
+                          component="th"
+                          scope="row"
+                          className={classes.tableRow}
+                        >
+                          제목
+                        </TableCell>
+                        <TableCell align="left" className={classes.tableCell}>
+                          {modalContent.title}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow key="writerName">
+                        <TableCell
+                          component="th"
+                          scope="row"
+                          className={classes.tableRow}
+                        >
+                          작성자
+                        </TableCell>
+                        <TableCell align="left" className={classes.tableCell}>
+                          {modalContent.writer}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow key="content">
+                        <TableCell
+                          component="th"
+                          scope="row"
+                          className={classes.tableRow}
+                        >
+                          내용
+                        </TableCell>
+                        <TableCell align="left" className={classes.tableCell}>
+                          {modalContent.content}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                <span className={classes.modalButtons}>
+                  {modalContent.userId === userId ? (
+                    <span>
+                      <Button
+                        onClick={() => deleteModal(modalContent.documentId)}
+                        variant="contained"
+                        color="secondary"
+                        className={classes.button}
+                      >
+                        삭제
+                      </Button>
+                      <Button
+                        onClick={() => modifyModal(modalContent.adminWrite)}
+                        variant="contained"
+                        color="primary"
+                        className={classes.button}
+                      >
+                        수정
+                      </Button>
+                    </span>
+                  ) : (
+                    <span></span>
+                  )}
+                  <Button
+                    onClick={modalClose}
+                    variant="contained"
                     className={classes.button}
                   >
                     닫기
