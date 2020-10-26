@@ -33,6 +33,14 @@ const useStyles = makeStyles((theme) => ({
     marginTop: "10px",
     fontFamily: ["Jua", '"sans-serif"'],
   },
+  tableHead: {
+    color: theme.palette.common.white,
+    fontFamily: ["Jua", '"sans-serif"'],
+  },
+  tableBody: {
+    fontFamily: ["Jua", '"sans-serif"'],
+    backgroundColor: "#fafafa",
+  },
   navigationSelected: {},
   backdrop: {
     zIndex: theme.zIndex.drawer + 1,
@@ -138,17 +146,28 @@ const useStyles = makeStyles((theme) => ({
     minHeight: "100vh",
   },
   paper: {
-    "@media (min-width: 600px)": {
-      width: "70%",
+    marginTop: theme.spacing(1),
+    marginBottom: theme.spacing(2),
+    padding: theme.spacing(2),
+    [theme.breakpoints.up(1000 + theme.spacing(3) * 2)]: {
+      marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(4),
+      padding: theme.spacing(3),
     },
-    width: "95%",
-    backgroundColor: theme.palette.background.paper,
-    borderRadius: "4px",
-    boxShadow: theme.shadows[5],
-    padding: theme.spacing(2, 0, 3),
   },
   tableContainer: {
     maxHeight: 400,
+  },
+  layout: {
+    paddingTop: "15px",
+    width: "auto",
+    marginLeft: theme.spacing(1),
+    marginRight: theme.spacing(1),
+    [theme.breakpoints.up(1000 + theme.spacing(2) * 2)]: {
+      width: 1000,
+      marginLeft: "auto",
+      marginRight: "auto",
+    },
   },
 }));
 
@@ -156,27 +175,52 @@ const AddCamp = () => {
   const classes = useStyles();
   const [value, setValue] = React.useState("1");
   const [futureReservation, setFutureReservation] = React.useState([]);
+  const [pastReservation, setPastReservation] = React.useState([]);
 
   React.useEffect(() => {
     app.auth().onAuthStateChanged(async (user) => {
       if (user) {
+        //미래 예약
         app
           .firestore()
           .collectionGroup("reservation")
-          // .where(
-          //   "end",
-          //   "<",
-          //   new Date(moment().startOf("day").toDate().getTime())
-          // )
+          .where("uid", "==", user.uid)
+          .get()
+          .then((snapshot) => {
+            snapshot.forEach((doc) => {
+              if (
+                doc.data().start.seconds >
+                moment().endOf("day").toDate().getTime() / 1000
+              ) {
+                setFutureReservation((oldArray) => [
+                  ...oldArray,
+                  {
+                    key: doc.id,
+                    camp: doc.data().camp,
+                    facility: doc.data().facility,
+                    title: doc.data().title,
+                    uid: doc.data().uid,
+                    start: doc.data().start,
+                    end: doc.data().end,
+                  },
+                ]);
+              }
+            });
+          });
+
+        //과거 이용 실적
+        app
+          .firestore()
+          .collectionGroup("reservation")
           .where("uid", "==", user.uid)
           .get()
           .then((snapshot) => {
             snapshot.forEach((doc) => {
               if (
                 doc.data().end.seconds <
-                moment().add(2, "days").startOf("day").toDate().getTime() / 1000
+                moment().endOf("day").toDate().getTime() / 1000
               ) {
-                setFutureReservation((oldArray) => [
+                setPastReservation((oldArray) => [
                   ...oldArray,
                   {
                     key: doc.id,
@@ -262,46 +306,79 @@ const AddCamp = () => {
             </Container>
           </div>
           {value === "1" ? (
-            <Paper className={classes.paper}>
-              <Table className={classes.typography}>
-                <TableHead className={classes.tableHead}>
-                  <TableRow>
-                    <TableCell>번호</TableCell>
-                    <TableCell>제목</TableCell>
-                    <TableCell>부대</TableCell>
-                    <TableCell>체육시설</TableCell>
-                    <TableCell>시작시간</TableCell>
-                    <TableCell>종료시간</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody className={classes.tableBody}>
-                  {futureReservation.map((content, index) => (
-                    <TableRow
-                      key={content.key}
-                      hover
-                      // onClick={() => showMoreContent(content.key)}
-                    >
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell>{content.title}</TableCell>
-                      <TableCell>{content.camp}</TableCell>
-                      <TableCell>{content.facility}</TableCell>
-                      <TableCell>
-                        {moment(content.start.toDate()).format(
-                          "YYYY/MM/DD hh:mm"
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {moment(content.end.toDate()).format("YYYY/MM/DD hh")}
-                      </TableCell>
+            <div className={classes.layout}>
+              <Paper className={classes.paper}>
+                <Table className={classes.typography}>
+                  <TableHead className={classes.tableHead}>
+                    <TableRow>
+                      <TableCell align="center">번호</TableCell>
+                      <TableCell align="center">제목</TableCell>
+                      <TableCell align="center">부대</TableCell>
+                      <TableCell align="center">체육시설</TableCell>
+                      <TableCell align="center">사용시간</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Paper>
+                  </TableHead>
+                  <TableBody className={classes.tableBody}>
+                    {futureReservation.map((content, index) => (
+                      <TableRow
+                        key={content.key}
+                        // hover
+                        // onClick={() => showMoreContent(content.key)}
+                      >
+                        <TableCell align="center">{index + 1}</TableCell>
+                        <TableCell align="center">{content.title}</TableCell>
+                        <TableCell align="center">{content.camp}</TableCell>
+                        <TableCell align="center">{content.facility}</TableCell>
+                        <TableCell align="center">
+                          {moment(content.start.toDate()).format(
+                            "YYYY/MM/DD hh:mm"
+                          )}
+                          &nbsp;~&nbsp;
+                          {moment(content.end.toDate()).format("hh:mm")}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Paper>
+            </div>
           ) : (
-            <Container className={classes.cardGrid} maxWidth="md">
-              <Grid container spacing={4}></Grid>
-            </Container>
+            <div className={classes.layout}>
+              <Paper className={classes.paper}>
+                <Table className={classes.typography}>
+                  <TableHead className={classes.tableHead}>
+                    <TableRow>
+                      <TableCell align="center">번호</TableCell>
+                      <TableCell align="center">제목</TableCell>
+                      <TableCell align="center">부대</TableCell>
+                      <TableCell align="center">체육시설</TableCell>
+                      <TableCell align="center">사용시간</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody className={classes.tableBody}>
+                    {pastReservation.map((content, index) => (
+                      <TableRow
+                        key={content.key}
+                        // hover
+                        // onClick={() => showMoreContent(content.key)}
+                      >
+                        <TableCell align="center">{index + 1}</TableCell>
+                        <TableCell align="center">{content.title}</TableCell>
+                        <TableCell align="center">{content.camp}</TableCell>
+                        <TableCell align="center">{content.facility}</TableCell>
+                        <TableCell align="center">
+                          {moment(content.start.toDate()).format(
+                            "YYYY/MM/DD hh:mm"
+                          )}
+                          &nbsp;~&nbsp;
+                          {moment(content.end.toDate()).format("hh:mm")}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Paper>
+            </div>
           )}
         </main>
         <footer className={classes.footer}>

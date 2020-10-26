@@ -15,8 +15,11 @@ import TableCell from "@material-ui/core/TableCell";
 import Input from "@material-ui/core/Input";
 import Button from "@material-ui/core/Button";
 import Table from "@material-ui/core/Table";
+import IconButton from "@material-ui/core/IconButton";
+import Tooltip from "@material-ui/core/Tooltip";
 import Snackbar from "@material-ui/core/Snackbar";
 import TableRow from "@material-ui/core/TableRow";
+import HelpIcon from "@material-ui/icons/Help";
 import "moment/locale/ko";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
@@ -54,7 +57,7 @@ const useStyles = makeStyles((theme) => ({
   },
   buttons: {
     display: "flex",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
   },
   textField: {
     fontFamily: ["Jua", '"sans-serif"'],
@@ -72,7 +75,7 @@ const useStyles = makeStyles((theme) => ({
   modalTypography: {
     fontFamily: ["Jua", '"sans-serif"'],
     fontSize: 24,
-    marginBottom: 20,
+    margin: 20,
     textAlign: "center",
   },
   tableContainer: {
@@ -282,6 +285,7 @@ const SelectDate = ({ camp, facility, save, isView }) => {
         message="오늘로부터 하루지난 예약만 가능합니다."
       />
 
+      {/* 예약현황에서 캘린더를 클릭하면 세부사항 보여주는 모달 */}
       <Modal
         className={classes.modal}
         open={userDataOpen}
@@ -405,6 +409,21 @@ const SelectDate = ({ camp, facility, save, isView }) => {
               </TableContainer>
 
               <span className={classes.buttons}>
+                <Tooltip
+                  title={
+                    <React.Fragment>
+                      <Typography color="inherit">
+                        수정을 원하실 경우 마이페이지의 내 예약 부분을
+                        사용하십시오.
+                      </Typography>
+                    </React.Fragment>
+                  }
+                >
+                  <IconButton>
+                    <HelpIcon />
+                  </IconButton>
+                </Tooltip>
+
                 <Button
                   onClick={closeUserData}
                   variant="contained"
@@ -419,6 +438,7 @@ const SelectDate = ({ camp, facility, save, isView }) => {
         </Slide>
       </Modal>
 
+      {/* 시간 선택하고 예약명을 물을때 사용하는 모달 */}
       <Modal
         className={classes.modal}
         open={open}
@@ -468,20 +488,20 @@ const SelectDate = ({ camp, facility, save, isView }) => {
 
               <span className={classes.buttons}>
                 <Button
-                  onClick={addReservationTitle}
-                  variant="contained"
-                  color="primary"
-                  className={classes.button}
-                >
-                  추가
-                </Button>
-                <Button
                   onClick={handleClose}
                   variant="contained"
                   color="secondary"
                   className={classes.button}
                 >
                   닫기
+                </Button>
+                <Button
+                  onClick={addReservationTitle}
+                  variant="contained"
+                  color="primary"
+                  className={classes.button}
+                >
+                  추가
                 </Button>
               </span>
             </Container>

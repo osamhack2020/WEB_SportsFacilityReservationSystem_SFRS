@@ -47,12 +47,13 @@ const Test = () => {
   //     });
   //   });
 
-  const startTime = moment().startOf("day").add(1, "days").toDate().getTime();
-  const endTime = moment().endOf("day").add(1, "days").toDate().getTime();
   const [array, setArray] = React.useState([]);
   const [maxScheduleCount, setMaxScheduleCount] = React.useState(0);
   const [maxScheduleCandidate, setMaxScheduleCandidate] = React.useState([]);
   const [uniqueMaxSchedule, setUniqueMaxSchedule] = React.useState([]);
+
+  const startTime = moment().add(1, "days").startOf("day").toDate().getTime();
+  const endTime = moment().add(1, "days").endOf("day").toDate().getTime();
 
   React.useEffect(() => {
     app
@@ -77,11 +78,6 @@ const Test = () => {
               end: doc.data().end.seconds,
             },
           ]);
-
-          // console.log(doc.id);
-          // console.log(doc.data().title);
-          // console.log(doc.data().start.toDate());
-          // console.log(doc.data().end.toDate());
         });
       });
   }, [startTime, endTime]);
@@ -94,38 +90,26 @@ const Test = () => {
     let endPoint = array[0].end;
     let temp = [array[0].title];
 
-    for (let i = 0; i < array.length; i++) {
+    for (let i = 1; i < array.length; i++) {
       if (endPoint <= array[i].start) {
         endPoint = array[i].end;
         temp.push(array[i].title);
       }
     }
-    console.log(temp);
     setMaxScheduleCandidate((oldArray) => [...oldArray, temp]);
     setMaxScheduleCount(temp.length);
   };
 
-  const untilNothingLeft = async (arr, line) => {
-    if (arr.length === 1) {
-      line.push(array[arr[0]].title);
-      if (line.length === maxScheduleCount) {
-        for (let k = 0; k < maxScheduleCandidate.length; k++) {
-          if (
-            !line.every(
-              (value, index) => value === maxScheduleCandidate[k][index]
-            )
-          ) {
-            await setMaxScheduleCandidate((oldArray) => [...oldArray, line]);
-          }
-        }
-      }
-      return;
-    }
+  const untilNothingLeft = (arr, line) => {
+    if (arr.length === 0) return;
 
     for (let i = 0; i < arr.length; i++) {
       let tempArray = line.slice();
       tempArray.push(array[arr[i]].title);
-      untilNothingLeft(returnChildSchedule(arr[i]), tempArray);
+
+      if (tempArray.length === maxScheduleCount)
+        setMaxScheduleCandidate((oldArray) => [...oldArray, tempArray]);
+      else untilNothingLeft(returnChildSchedule(arr[i]), tempArray);
     }
   };
 
@@ -142,38 +126,38 @@ const Test = () => {
       let temp = [];
       for (let j = i + 1; j < array.length; j++) {
         if (array[i].end <= array[j].start) temp.push(j);
-        untilNothingLeft(temp, [array[i].title]);
       }
+      if (temp !== []) untilNothingLeft(temp, [array[i].title]);
     }
   };
 
   const printMaxPossibleSchedule = () => {
     let arr = maxScheduleCandidate.slice();
-    let uniqueArr = [];
+
     for (let k = 0; k < arr.length; k++) {
-      uniqueArr.push(arr[k]);
+      let uniqueArrIndex = [];
       for (let i = k + 1; i < arr.length; i++) {
         if (arr[k].every((value, index) => value === arr[i][index])) {
-          arr.splice(i, 1);
+          // arr.splice(i, 1);
+          uniqueArrIndex.push(i);
         }
+      }
+
+      for (let j = 0; j < uniqueArrIndex.length; j++) {
+        arr.splice(uniqueArrIndex[j] - j, 1);
       }
     }
 
-    let realUniqueArray = [];
-    for (let k = 0; k < uniqueArr.length; k++) {
-      realUniqueArray.push(uniqueArr[k]);
-      for (let i = k + 1; i < uniqueArr.length; i++) {
-        if (
-          uniqueArr[k].every((value, index) => value === uniqueArr[i][index])
-        ) {
-          uniqueArr.splice(i, 1);
-        }
-      }
-    }
-
-    setUniqueMaxSchedule(realUniqueArray);
-    console.log(realUniqueArray);
+    setUniqueMaxSchedule(arr);
     console.log(uniqueMaxSchedule);
+  };
+
+  const selectOneMaximumSchedule = () => {
+    console.log(
+      uniqueMaxSchedule[
+        Math.floor(Math.random() * (uniqueMaxSchedule.length - 1))
+      ]
+    );
   };
 
   return (
@@ -186,7 +170,7 @@ const Test = () => {
         최대 가능 스케줄
       </Button>
       <Button onClick={allPossibleSchedule} variant="contained" color="primary">
-        test
+        가능한 모든 스케줄 확인
       </Button>
       <Button
         onClick={printMaxPossibleSchedule}
@@ -194,6 +178,13 @@ const Test = () => {
         color="primary"
       >
         가능한 경우 출력
+      </Button>
+      <Button
+        onClick={selectOneMaximumSchedule}
+        variant="contained"
+        color="primary"
+      >
+        여러가지 가능한 스케줄 중에서 랜덤으로 하나 고르기
       </Button>
     </div>
   );
