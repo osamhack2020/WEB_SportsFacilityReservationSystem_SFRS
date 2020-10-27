@@ -2,51 +2,9 @@ import React from "react";
 import app from "./firebase";
 import moment from "moment";
 import Button from "@material-ui/core/Button";
+import { Bracket } from "react-tournament-bracket";
 
 const Test = () => {
-  // const db = app.firestore();
-  // db.collection("camp")
-  //   .get()
-  //   .then((snapshot) => {
-  //     // 캠프 컬렉션안의 모든 부대를 돈다.
-  //     snapshot.forEach((doc) => {
-  //       db.collection("camp")
-  //         .doc(doc.id)
-  //         .collection("facility")
-  //         .get()
-  //         .then((snapshot) => {
-  //           // 부대내의 모든 체육시설 접근한다.
-  //           snapshot.forEach((doc) => {
-  //             const startTime = moment()
-  //               .startOf("day")
-  //               .subtract(1, "days")
-  //               .toDate()
-  //               .getTime();
-  //             const endTime = moment()
-  //               .endOf("day")
-  //               .subtract(1, "days")
-  //               .toDate()
-  //               .getTime();
-
-  //             db.collection("camp")
-  //               .doc(doc.id)
-  //               .collection("facility")
-  //               .doc(doc.id)
-  //               .collection("reservation")
-  //               .where("start", ">=", new Date(startTime))
-  //               .where("start", "<=", new Date(endTime))
-  //               .get()
-  // .then((snapshot) => {
-  //   snapshot.forEach((doc) => {
-  //     console.log(doc.data().start);
-  //     console.log(doc.data().end);
-  //   });
-  // });
-  //           });
-  //         });
-  //     });
-  //   });
-
   const [array, setArray] = React.useState([]);
   const [maxScheduleCount, setMaxScheduleCount] = React.useState(0);
   const [maxScheduleCandidate, setMaxScheduleCandidate] = React.useState([]);
@@ -81,6 +39,49 @@ const Test = () => {
         });
       });
   }, [startTime, endTime]);
+
+  // const getEveryReservation = () => {
+  //   const db = app.firestore();
+  //   db.collection("camp")
+  //     .get()
+  //     .then((snapshot) => {
+  //       // 캠프 컬렉션안의 모든 부대를 돈다.
+  //       snapshot.forEach((doc) => {
+  //         db.collection("camp")
+  //           .doc(doc.id)
+  //           .collection("facility")
+  //           .get()
+  //           .then((snapshot) => {
+  //             // 부대내의 모든 체육시설 접근한다.
+  //             snapshot.forEach((doc) => {
+  //               const startTime = moment()
+  //                 .startOf("day")
+  //                 .toDate()
+  //                 .getTime();
+  //               const endTime = moment()
+  //                 .endOf("day")
+  //                 .toDate()
+  //                 .getTime();
+
+  //               db.collection("camp")
+  //                 .doc(doc.id)
+  //                 .collection("facility")
+  //                 .doc(doc.id)
+  //                 .collection("reservation")
+  //                 .where("start", ">=", new Date(startTime))
+  //                 .where("start", "<=", new Date(endTime))
+  //                 .get()
+  //                 .then((snapshot) => {
+  //                   snapshot.forEach((doc) => {
+  //                     console.log(doc.data().start);
+  //                     console.log(doc.data().end);
+  //                   });
+  //                 });
+  //             });
+  //           });
+  //       });
+  //     });
+  // }
 
   const clickHandle = () => {
     console.log(array);
@@ -138,7 +139,6 @@ const Test = () => {
       let uniqueArrIndex = [];
       for (let i = k + 1; i < arr.length; i++) {
         if (arr[k].every((value, index) => value === arr[i][index])) {
-          // arr.splice(i, 1);
           uniqueArrIndex.push(i);
         }
       }
@@ -158,6 +158,45 @@ const Test = () => {
         Math.floor(Math.random() * (uniqueMaxSchedule.length - 1))
       ]
     );
+  };
+
+  const game = {
+    id: 1,
+    name: "Rumble in the Jungle",
+    bracketLabel: "BO1",
+    scheduled: 1526130150000,
+    court: {
+      name: "test",
+      venue: {
+        name: "Gabba",
+      },
+    },
+    sides: {
+      home: {
+        score: {
+          score: 1,
+        },
+        team: {
+          id: 22,
+          name: "Australia",
+        },
+        seed: {
+          displayName: "string",
+          rank: 1,
+          // sourceGame: Game,
+          sourcePool: {},
+        },
+      },
+      visitor: {
+        score: {
+          score: 0,
+        },
+        team: {
+          id: 23,
+          name: "USA",
+        },
+      },
+    },
   };
 
   return (
@@ -186,6 +225,7 @@ const Test = () => {
       >
         여러가지 가능한 스케줄 중에서 랜덤으로 하나 고르기
       </Button>
+      <Bracket game={game} />
     </div>
   );
 };

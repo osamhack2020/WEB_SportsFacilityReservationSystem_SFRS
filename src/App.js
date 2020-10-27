@@ -323,17 +323,13 @@ const App = () => {
 
             <Route path="/boardPage" component={BoardPage} />
 
-            <Route path="/myInfoPage" component={MyInfoPage} />
+            <PrivateRoute path="/myInfoPage" component={MyInfoPage} />
 
-            <Route path="/myPage" component={MyPage} />
+            <PrivateRoute path="/myPage" component={MyPage} />
 
             <Route path="/test" component={Test} />
 
-            <Route
-              path="/approveCamp"
-              component={ApproveCamp}
-              // render={() => <AddFacility user={currentUser} />}
-            />
+            <Route path="/approveCamp" component={ApproveCamp} />
 
             <PrivateRoute path="/addCamp" component={AddCamp} />
 
