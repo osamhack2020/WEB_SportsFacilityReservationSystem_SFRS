@@ -10,6 +10,8 @@ import Login from "./fontawesome/login";
 import Logout from "./fontawesome/logout";
 import PrivateRoute from "./privateRoute";
 import Typography from "@material-ui/core/Typography";
+import Grid from "@material-ui/core/Grid";
+import Link from "@material-ui/core/Link";
 import SignUp from "./signUp";
 import MenuList from "@material-ui/core/MenuList";
 import SignIn from "./signIn";
@@ -25,9 +27,12 @@ import app from "./firebase";
 import { AuthProvider, AuthContext } from "./auth";
 import Divider from "@material-ui/core/Divider";
 import { makeStyles } from "@material-ui/core/styles";
-import BackgroundImage from "./backgroundImage";
-import GridContainer from "./gridContainer.js";
-import GridItem from "./gridItem.js";
+import Container from "@material-ui/core/Container";
+import Card from "@material-ui/core/Card";
+import CardActionArea from "@material-ui/core/CardActionArea";
+import CardContent from "@material-ui/core/CardContent";
+import CardMedia from "@material-ui/core/CardMedia";
+import Hidden from "@material-ui/core/Hidden";
 import ClickAwayListener from "@material-ui/core/ClickAwayListener";
 import MenuItem from "@material-ui/core/MenuItem";
 import Test from "./cloudFunctionTestPage";
@@ -72,6 +77,49 @@ const useStyles = makeStyles((theme) => ({
     flexDirection: "column",
     minHeight: "100vh",
   },
+  mainFeaturedPost: {
+    position: "relative",
+    backgroundColor: theme.palette.grey[800],
+    color: theme.palette.common.white,
+    marginBottom: theme.spacing(4),
+    // backgroundImage: 'url(https://source.unsplash.com/random)',
+    backgroundImage: "require(./assets/tennisHD.jpg)",
+    backgroundSize: "cover",
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "center",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    right: 0,
+    left: 0,
+    backgroundColor: "rgba(0,0,0,.3)",
+  },
+  mainFeaturedPostContent: {
+    position: "relative",
+    padding: theme.spacing(3),
+    [theme.breakpoints.up("md")]: {
+      padding: theme.spacing(6),
+      paddingRight: 0,
+    },
+  },
+  card: {
+    display: "flex",
+  },
+  cardDetails: {
+    flex: 1,
+  },
+  cardMedia: {
+    width: 160,
+  },
+  sidebarAboutBox: {
+    padding: theme.spacing(2),
+    backgroundColor: theme.palette.grey[200],
+  },
+  sidebarSection: {
+    marginTop: theme.spacing(3),
+  },
 }));
 
 const theme = createMuiTheme({
@@ -93,6 +141,15 @@ const App = () => {
   const handleClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) return;
     setAnchorEl(null);
+  };
+
+  const post = {
+    title: "국군장병들의 건강한 체육활동을 위하여",
+    description:
+      "간부 병 상관없이 누구나 확률적으로 즐길수있는 공정한 체육시설예약체계 각 부대에서 있는 체육대회에도 많은 관심 부탁드립니다.",
+    image: "https://source.unsplash.com/random",
+    imgText: "main image description",
+    linkText: "Continue reading…",
   };
 
   return (
@@ -268,7 +325,150 @@ const App = () => {
           <Switch>
             <Route exact path="/">
               <div className={classes.realRoot}>
-                <BackgroundImage
+                <Container maxWidth="lg" style={{ padding: 0 }}>
+                  <main>
+                    {/* 새로 작성한 메인 페이지 */}
+                    <Paper
+                      className={classes.mainFeaturedPost}
+                      style={{
+                        backgroundImage:
+                          "url(" + require("./assets/tennisHD.jpg") + ")",
+                      }}
+                    >
+                      {/* Increase the priority of the hero background image */}
+                      {
+                        <img
+                          style={{ display: "none" }}
+                          src={post.image}
+                          alt={post.imageText}
+                        />
+                      }
+                      <div className={classes.overlay} />
+                      <Grid container>
+                        <Grid item md={6}>
+                          <div className={classes.mainFeaturedPostContent}>
+                            <Typography
+                              component="h1"
+                              variant="h3"
+                              color="inherit"
+                              gutterBottom
+                            >
+                              {post.title}
+                            </Typography>
+                            <Typography variant="h5" color="inherit" paragraph>
+                              {post.description}
+                            </Typography>
+                            <Link variant="subtitle1" href="#">
+                              {post.linkText}
+                            </Link>
+                          </div>
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                    <Grid container spacing={4}>
+                      <Grid item xs={12} md={6}>
+                        <CardActionArea component="a" href="#">
+                          <Card className={classes.card}>
+                            <div className={classes.cardDetails}>
+                              <CardContent>
+                                <Typography component="h2" variant="h5">
+                                  {post.title}
+                                </Typography>
+                                <Typography
+                                  variant="subtitle1"
+                                  color="textSecondary"
+                                >
+                                  {post.date}
+                                </Typography>
+                                <Typography variant="subtitle1" paragraph>
+                                  {post.description}
+                                </Typography>
+                                <Typography variant="subtitle1" color="primary">
+                                  Continue reading...
+                                </Typography>
+                              </CardContent>
+                            </div>
+                            <Hidden xsDown>
+                              <CardMedia
+                                className={classes.cardMedia}
+                                image={post.image}
+                                title={post.imageTitle}
+                              />
+                            </Hidden>
+                          </Card>
+                        </CardActionArea>
+                      </Grid>
+
+                      <Grid item xs={12} md={6}>
+                        <CardActionArea component="a" href="#">
+                          <Card className={classes.card}>
+                            <div className={classes.cardDetails}>
+                              <CardContent>
+                                <Typography component="h2" variant="h5">
+                                  {post.title}
+                                </Typography>
+                                <Typography
+                                  variant="subtitle1"
+                                  color="textSecondary"
+                                >
+                                  {post.date}
+                                </Typography>
+                                <Typography variant="subtitle1" paragraph>
+                                  {post.description}
+                                </Typography>
+                                <Typography variant="subtitle1" color="primary">
+                                  Continue reading...
+                                </Typography>
+                              </CardContent>
+                            </div>
+                            <Hidden xsDown>
+                              <CardMedia
+                                className={classes.cardMedia}
+                                image={post.image}
+                                title={post.imageTitle}
+                              />
+                            </Hidden>
+                          </Card>
+                        </CardActionArea>
+                      </Grid>
+                    </Grid>
+
+                    <Grid item xs={12} md={4}>
+                      <Paper elevation={0} className={classes.sidebarAboutBox}>
+                        <Typography variant="h6" gutterBottom>
+                          asd
+                        </Typography>
+                        <Typography>asd</Typography>
+                      </Paper>
+                      <Typography
+                        variant="h6"
+                        gutterBottom
+                        className={classes.sidebarSection}
+                      >
+                        Archives
+                      </Typography>
+                      2010 123912390123 1232 342 342 3423 4
+                      <Typography
+                        variant="h6"
+                        gutterBottom
+                        className={classes.sidebarSection}
+                      >
+                        Social
+                      </Typography>
+                      <Link display="block" variant="body1" href="#">
+                        <Grid
+                          container
+                          direction="row"
+                          spacing={1}
+                          alignItems="center"
+                        >
+                          <Grid item>asdasdsac</Grid>
+                          <Grid item>aasdaskjn</Grid>
+                        </Grid>
+                      </Link>
+                    </Grid>
+
+                    {/* <BackgroundImage
                   filter
                   image={require("./assets/tennisHD.jpg")}
                 >
@@ -286,7 +486,10 @@ const App = () => {
                       </GridItem>
                     </GridContainer>
                   </div>
-                </BackgroundImage>
+                </BackgroundImage> */}
+                  </main>
+                </Container>
+
                 <footer className={classes.footer}>
                   <Typography
                     variant="subtitle1"

@@ -13,8 +13,11 @@ import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import app from "./firebase";
 import Modal from "@material-ui/core/Modal";
 import Backdrop from "@material-ui/core/Backdrop";
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
 import Slide from "@material-ui/core/Slide";
 import TableBody from "@material-ui/core/TableBody";
+import Select from "@material-ui/core/Select";
 import TableCell from "@material-ui/core/TableCell";
 import TableContainer from "@material-ui/core/TableContainer";
 import TableRow from "@material-ui/core/TableRow";
@@ -31,16 +34,6 @@ import HourglassEmptyIcon from "@material-ui/icons/HourglassEmpty";
 import AddToQueueIcon from "@material-ui/icons/AddToQueue";
 
 const useStyles = makeStyles((theme) => ({
-  // layout: {
-  //   width: "auto",
-  //   marginLeft: theme.spacing(2),
-  //   marginRight: theme.spacing(2),
-  //   [theme.breakpoints.up(1000 + theme.spacing(2) * 2)]: {
-  //     width: 1000,
-  //     marginLeft: "auto",
-  //     marginRight: "auto",
-  //   },
-  // },
   root: {
     backgroundColor: "#fafafa",
     width: 500,
@@ -194,7 +187,6 @@ const AddCamp = () => {
   ]);
   const [snackBar, setSnackBar] = React.useState(false);
   const [pendingCamps, setPendingCamps] = React.useState([]);
-
   const handleAddFields = () => {
     setInputFields((oldArray) => [...oldArray, { facility: "", location: "" }]);
     setFacilityError((oldArray) => [
@@ -213,6 +205,16 @@ const AddCamp = () => {
     else values[index].location = value;
     setInputFields(values);
   };
+  const [tournamentModal, setTournamentModal] = React.useState(false);
+  const [tournamentCamp, setTournamentCamp] = React.useState("");
+  const [tournamentName, setTournamentName] = React.useState("");
+  const [tournamentNameError, setTournamentNameError] = React.useState(false);
+  const [
+    tournamentEnrollNumberError,
+    setTournamentEnrollNumberError,
+  ] = React.useState(false);
+  const [tournamentEnrollNumber, setTournamentEnrollNumber] = React.useState(0);
+  const [tournamentSnackbar, setTournamentSnackbar] = React.useState(false);
 
   const addCamp = async () => {
     setOpenProgress(true);
@@ -270,13 +272,17 @@ const AddCamp = () => {
 
   const modalClose = () => {
     setOpenModal(false);
+    setChoosedCamp("");
     setSelectedMyCamp([]);
   };
 
   const handleClose = () => {
     setOpen(false);
+    setChoosedCamp("");
     setCampName("");
     setInputFields([{ facility: "", location: "" }]);
+    // setFacilityError([{ facility: "", location: "" }]);
+    setSelectedMyCamp([]);
     setCampNameError("");
     for (let i = 0; i < inputFields.length; i++) {
       const values = [...facilityError];
@@ -333,6 +339,107 @@ const AddCamp = () => {
           ]);
         });
       });
+  };
+
+  const modifyPendingCamp = async (camp) => {
+    setOpenModal(false);
+    setOpen(true);
+    setInputFields([]);
+    setFacilityError([]);
+
+    // await db.collection("pendingApproval").doc(camp).delete();
+    setCampName(camp);
+
+    await app
+      .firestore()
+      .collection("pendingApproval")
+      .doc(camp)
+      .collection("facility")
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          console.log("hello");
+          setInputFields((oldArray) => [
+            ...oldArray,
+            { facility: doc.id, location: doc.data().location },
+          ]);
+
+          setFacilityError((oldArray) => [
+            ...oldArray,
+            { facility: "", location: "" },
+          ]);
+        });
+      });
+
+    console.log(facilityError);
+  };
+
+  const showPendingFacility = (camp) => {
+    setOpenModal(true);
+    setChoosedCamp(camp);
+    app
+      .firestore()
+      .collection("pendingApproval")
+      .doc(camp)
+      .collection("facility")
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setSelectedMyCamp((oldArray) => [
+            ...oldArray,
+            { facility: doc.id, location: doc.data().location },
+          ]);
+        });
+      });
+  };
+
+  const createTournament = (camp) => {
+    setTournamentCamp(camp);
+    setTournamentModal(true);
+  };
+
+  const tournamentClose = () => {
+    setTournamentEnrollNumber(0);
+    setTournamentCamp("");
+    setTournamentName("");
+    setTournamentModal(false);
+  };
+
+  const addTournament = async () => {
+    setOpenProgress(true);
+    setTournamentNameError(false);
+
+    if (tournamentName === "") {
+      setTournamentNameError(true);
+      return;
+    } else if (tournamentEnrollNumber === 0) {
+      setTournamentEnrollNumberError(true);
+      return;
+    }
+
+    setTimeout(() => {
+      setOpenProgress(false);
+    }, 400);
+
+    await app
+      .firestore()
+      .collection("tournament")
+      .doc(tournamentName)
+      .set({ camp: tournamentCamp, enrollNumber: tournamentEnrollNumber });
+
+    setTournamentSnackbar(true);
+    setTimeout(() => {
+      eraseTournament();
+    }, 1500);
+  };
+
+  const eraseTournament = () => {
+    setTournamentModal(false);
+    setTournamentEnrollNumberError(false);
+    setTournamentNameError(false);
+    setTournamentCamp("");
+    setTournamentEnrollNumber(0);
+    setTournamentName("");
   };
 
   return (
@@ -427,13 +534,148 @@ const AddCamp = () => {
                           color="primary"
                           onClick={() => showFacility(camp)}
                         >
-                          자세히히
+                          자세히
                         </Button>
-                        <Button color="primary">수정</Button>
+                        <Button
+                          color="primary"
+                          onClick={() => createTournament(camp)}
+                        >
+                          체육대회 개최
+                        </Button>
                       </CardActions>
                     </Card>
                   </Grid>
                 ))}
+
+                <Modal
+                  id="tournament"
+                  className={classes.modal}
+                  open={tournamentModal}
+                  onClose={tournamentClose}
+                  closeAfterTransition
+                  BackdropComponent={Backdrop}
+                  BackdropProps={{
+                    timeout: 500,
+                  }}
+                >
+                  <Slide direction="up" in={tournamentModal}>
+                    <div className={classes.paper}>
+                      <Container component="main" maxWidth="md">
+                        <Typography className={classes.modalTypography}>
+                          체육대회 만들기
+                        </Typography>
+                        <TableContainer
+                          component={Paper}
+                          className={classes.tableContainer}
+                        >
+                          <Table>
+                            <TableBody>
+                              <TableRow key="campName">
+                                <TableCell
+                                  component="th"
+                                  scope="row"
+                                  className={classes.tableRow}
+                                >
+                                  체육대회명
+                                </TableCell>
+                                <th>
+                                  <FormControl
+                                    fullWidth
+                                    error={tournamentNameError}
+                                  >
+                                    <Input
+                                      value={tournamentName}
+                                      onChange={({ target: { value } }) =>
+                                        setTournamentName(value)
+                                      }
+                                      type="text"
+                                      className={classes.textField}
+                                      placeholder="체육대회명을 입력해주십시오."
+                                    />
+                                  </FormControl>
+                                </th>
+                              </TableRow>
+                              <TableRow>
+                                <TableCell
+                                  component="th"
+                                  scope="row"
+                                  className={classes.tableRow}
+                                >
+                                  체육대회 개최 부대
+                                </TableCell>
+                                <TableCell
+                                  align="left"
+                                  className={classes.tableCell}
+                                >
+                                  {tournamentCamp}
+                                </TableCell>
+                              </TableRow>
+
+                              <TableRow key="campName">
+                                <TableCell
+                                  component="th"
+                                  scope="row"
+                                  className={classes.tableRow}
+                                >
+                                  체육대회 참가팀 수
+                                </TableCell>
+                                <FormControl
+                                  required
+                                  variant="outlined"
+                                  className={classes.formControl}
+                                  fullWidth
+                                  error={tournamentEnrollNumberError}
+                                >
+                                  <InputLabel id="demo-simple-select-outlined-label">
+                                    참가팀 수 선택
+                                  </InputLabel>
+                                  <Select
+                                    value={tournamentEnrollNumber}
+                                    onChange={({ target: { value } }) =>
+                                      setTournamentEnrollNumber(value)
+                                    }
+                                    label="참가팀 수 선택"
+                                  >
+                                    <MenuItem value="8">8</MenuItem>
+                                    <MenuItem value="16">16</MenuItem>
+                                    <MenuItem value="32">32</MenuItem>
+                                    <MenuItem value="64">64</MenuItem>
+                                  </Select>
+                                </FormControl>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+
+                        <span className={classes.buttons}>
+                          <Button
+                            onClick={tournamentClose}
+                            variant="contained"
+                            color="secondary"
+                            className={classes.button}
+                          >
+                            닫기
+                          </Button>
+                          <Button
+                            onClick={addTournament}
+                            variant="contained"
+                            color="primary"
+                            className={classes.button}
+                          >
+                            확인
+                          </Button>
+                          <Snackbar
+                            autoHideDuration={2000}
+                            open={tournamentSnackbar}
+                            onClose={() => setTournamentSnackbar(false)}
+                            TransitionComponent={Slide}
+                            message="체육대회를 개최하였습니다."
+                          />
+                        </span>
+                      </Container>
+                    </div>
+                  </Slide>
+                </Modal>
 
                 <Modal
                   id="showFacility"
@@ -450,7 +692,7 @@ const AddCamp = () => {
                     <div className={classes.paper}>
                       <Container component="main" maxWidth="md">
                         <Typography className={classes.modalTypography}>
-                          추가된 부대 승인하기
+                          상세보기
                         </Typography>
                         <TableContainer
                           component={Paper}
@@ -548,7 +790,7 @@ const AddCamp = () => {
                           <div className={classes.paper}>
                             <Container component="main" maxWidth="md">
                               <Typography className={classes.modalTypography}>
-                                부대 추가하기
+                                부대 및 체육시설 추가하기
                               </Typography>
                               <TableContainer
                                 component={Paper}
@@ -680,14 +922,8 @@ const AddCamp = () => {
                                     color="primary"
                                     className={classes.button}
                                   >
-                                    추가
+                                    확인
                                   </Button>
-                                  <Backdrop
-                                    className={classes.backdrop}
-                                    open={openProgress}
-                                  >
-                                    <CircularProgress color="inherit" />
-                                  </Backdrop>
                                   <Snackbar
                                     autoHideDuration={2000}
                                     open={snackBar}
@@ -738,16 +974,23 @@ const AddCamp = () => {
                           <Button
                             value={camp}
                             color="primary"
-                            onClick={() => showFacility(camp)}
+                            onClick={() => showPendingFacility(camp)}
                           >
                             자세히
                           </Button>
-                          <Button color="primary">수정</Button>
+                          <Button
+                            color="primary"
+                            onClick={() => modifyPendingCamp(camp)}
+                          >
+                            수정
+                          </Button>
                         </CardActions>
                       </Card>
                     </Grid>
                   ))
                 )}
+                {/* 승인대기중인부대용 모달임 */}
+
                 <Modal
                   className={classes.modal}
                   open={open}
@@ -762,7 +1005,7 @@ const AddCamp = () => {
                     <div className={classes.paper}>
                       <Container component="main" maxWidth="md">
                         <Typography className={classes.modalTypography}>
-                          부대 추가하기
+                          부대 및 체육시설 추가하기
                         </Typography>
                         <TableContainer
                           component={Paper}
@@ -807,24 +1050,24 @@ const AddCamp = () => {
                                       체육시설
                                     </TableCell>
                                     <th>
-                                      <FormControl
+                                      {/* <FormControl
                                         fullWidth
                                         error={
                                           facilityError[index].facility === ""
                                             ? false
                                             : true
                                         }
-                                      >
-                                        <Input
-                                          value={input.facility || ""}
-                                          onChange={({ target: { value } }) =>
-                                            handleInputChange(index, value, 0)
-                                          }
-                                          type="text"
-                                          className={classes.textField}
-                                          placeholder="체육시설을 입력해주십시오."
-                                        />
-                                      </FormControl>
+                                      > */}
+                                      <Input
+                                        value={input.facility || ""}
+                                        onChange={({ target: { value } }) =>
+                                          handleInputChange(index, value, 0)
+                                        }
+                                        type="text"
+                                        className={classes.textField}
+                                        placeholder="체육시설을 입력해주십시오."
+                                      />
+                                      {/* </FormControl>
                                       <FormControl
                                         fullWidth
                                         error={
@@ -832,17 +1075,17 @@ const AddCamp = () => {
                                             ? false
                                             : true
                                         }
-                                      >
-                                        <Input
-                                          value={input.location || ""}
-                                          onChange={({ target: { value } }) =>
-                                            handleInputChange(index, value, 1)
-                                          }
-                                          type="text"
-                                          className={classes.textField}
-                                          placeholder="위치를 입력해주십시오."
-                                        />
-                                      </FormControl>
+                                      > */}
+                                      <Input
+                                        value={input.location || ""}
+                                        onChange={({ target: { value } }) =>
+                                          handleInputChange(index, value, 1)
+                                        }
+                                        type="text"
+                                        className={classes.textField}
+                                        placeholder="위치를 입력해주십시오."
+                                      />
+                                      {/* </FormControl> */}
                                     </th>
                                     <th>
                                       <IndeterminateCheckBoxIcon
@@ -878,7 +1121,7 @@ const AddCamp = () => {
                               color="primary"
                               className={classes.button}
                             >
-                              추가
+                              확인
                             </Button>
                             <Backdrop
                               className={classes.backdrop}
@@ -902,6 +1145,94 @@ const AddCamp = () => {
                               닫기
                             </Button>
                           </span>
+                        </span>
+                      </Container>
+                    </div>
+                  </Slide>
+                </Modal>
+
+                <Modal
+                  id="showFacility"
+                  className={classes.modal}
+                  open={openModal}
+                  onClose={modalClose}
+                  closeAfterTransition
+                  BackdropComponent={Backdrop}
+                  BackdropProps={{
+                    timeout: 500,
+                  }}
+                >
+                  <Slide direction="up" in={openModal}>
+                    <div className={classes.paper}>
+                      <Container component="main" maxWidth="md">
+                        <Typography className={classes.modalTypography}>
+                          상세보기
+                        </Typography>
+                        <TableContainer
+                          component={Paper}
+                          className={classes.tableContainer}
+                        >
+                          <Table>
+                            <TableBody>
+                              <TableRow key="campName">
+                                <TableCell
+                                  component="th"
+                                  scope="row"
+                                  className={classes.tableRow}
+                                >
+                                  부대명
+                                </TableCell>
+                                <TableCell
+                                  align="left"
+                                  className={classes.tableCell}
+                                >
+                                  {choosedCamp}
+                                </TableCell>
+                                <TableCell
+                                  align="left"
+                                  className={classes.tableCell}
+                                ></TableCell>
+                              </TableRow>
+
+                              {selectedMyCamp.map((input, index) => (
+                                <React.Fragment key={`${input}~${index}`}>
+                                  <TableRow key={index}>
+                                    <TableCell
+                                      component="th"
+                                      scope="row"
+                                      className={classes.tableRow}
+                                    >
+                                      체육시설 / 위치
+                                    </TableCell>
+                                    <TableCell
+                                      align="left"
+                                      className={classes.tableCell}
+                                    >
+                                      {selectedMyCamp[index].facility}
+                                    </TableCell>
+
+                                    <TableCell
+                                      align="left"
+                                      className={classes.tableCell}
+                                    >
+                                      {selectedMyCamp[index].location}
+                                    </TableCell>
+                                  </TableRow>
+                                </React.Fragment>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+
+                        <span className={classes.modalButtons}>
+                          <Button
+                            onClick={modalClose}
+                            variant="contained"
+                            color="secondary"
+                            className={classes.button}
+                          >
+                            닫기
+                          </Button>
                         </span>
                       </Container>
                     </div>

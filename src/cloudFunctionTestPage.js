@@ -2,7 +2,6 @@ import React from "react";
 import app from "./firebase";
 import moment from "moment";
 import Button from "@material-ui/core/Button";
-import { Bracket } from "react-tournament-bracket";
 
 const Test = () => {
   const [array, setArray] = React.useState([]);
@@ -160,47 +159,9 @@ const Test = () => {
     );
   };
 
-  const game = {
-    id: 1,
-    name: "Rumble in the Jungle",
-    bracketLabel: "BO1",
-    scheduled: 1526130150000,
-    court: {
-      name: "test",
-      venue: {
-        name: "Gabba",
-      },
-    },
-    sides: {
-      home: {
-        score: {
-          score: 1,
-        },
-        team: {
-          id: 22,
-          name: "Australia",
-        },
-        seed: {
-          displayName: "string",
-          rank: 1,
-          // sourceGame: Game,
-          sourcePool: {},
-        },
-      },
-      visitor: {
-        score: {
-          score: 0,
-        },
-        team: {
-          id: 23,
-          name: "USA",
-        },
-      },
-    },
-  };
-
   return (
     <div>
+      
       <h2>This is index page~</h2>
       <Button onClick={clickHandle} variant="contained" color="primary">
         array 만들기
@@ -225,7 +186,6 @@ const Test = () => {
       >
         여러가지 가능한 스케줄 중에서 랜덤으로 하나 고르기
       </Button>
-      <Bracket game={game} />
     </div>
   );
 };

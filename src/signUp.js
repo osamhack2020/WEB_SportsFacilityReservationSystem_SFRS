@@ -18,16 +18,16 @@ import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import Select from "@material-ui/core/Select";
 import Checkbox from "@material-ui/core/Checkbox";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
-import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
+import { createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
 
 const theme = createMuiTheme({
   overrides: {
     MuiInputLabel: {
       root: {
         fontFamily: ["Jua", '"sans-serif"'],
-      }
-    }
-  }
+      },
+    },
+  },
 });
 
 const useStyles = makeStyles((theme) => ({
@@ -146,19 +146,16 @@ const SignUp = ({ history }) => {
           .createUserWithEmailAndPassword(email.value, password.value)
           .then(
             ({ user }) => {
-              app
-                .firestore()
-                .collection("users")
-                .add({
-                  name: name.value,
-                  military,
-                  rank,
-                  serialNumber: serialNumber.value,
-                  email: email.value,
-                  uid: user.uid,
-                  admin: adminState,
-                  rootAdmin: false,
-                });
+              app.firestore().collection("users").add({
+                name: name.value,
+                military,
+                rank,
+                serialNumber: serialNumber.value,
+                email: email.value,
+                uid: user.uid,
+                admin: adminState,
+                rootAdmin: false,
+              });
 
               history.push("/");
             },
@@ -223,9 +220,13 @@ const SignUp = ({ history }) => {
             <Avatar className={classes.avatar}>
               <LockOutlinedIcon />
             </Avatar>
-            <Typography component="h1" variant="h5" className={classes.marginTop}>
+            <Typography
+              component="h1"
+              variant="h5"
+              className={classes.marginTop}
+            >
               회원가입
-        </Typography>
+            </Typography>
             <form className={classes.form} noValidate onSubmit={handleSignUp}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
@@ -234,7 +235,9 @@ const SignUp = ({ history }) => {
                     variant="outlined"
                     className={classes.formControl}
                   >
-                    <InputLabel id="military" className={classes.typography}>군 선택</InputLabel>
+                    <InputLabel id="military" className={classes.typography}>
+                      군 선택
+                    </InputLabel>
                     <Select
                       labelId="military"
                       id="military"
@@ -258,7 +261,7 @@ const SignUp = ({ history }) => {
                   >
                     <InputLabel id="demo-simple-select-outlined-label">
                       계급
-                </InputLabel>
+                    </InputLabel>
                     <Select
                       labelId="demo-simple-select-outlined-label"
                       id="demo-simple-select-outlined"
@@ -376,7 +379,6 @@ const SignUp = ({ history }) => {
                     }
                   />
                 </ThemeProvider>
-
               </Grid>
               <Button
                 type="submit"
@@ -386,7 +388,7 @@ const SignUp = ({ history }) => {
                 className={classes.submit}
               >
                 가입하기
-          </Button>
+              </Button>
             </form>
           </div>
         </Container>
@@ -403,7 +405,7 @@ const SignUp = ({ history }) => {
           }}
         >
           홈페이지 관련문의: 정영안 (T.010-9715-1508)
-          </Typography>
+        </Typography>
         <Typography
           variant="body2"
           color="textSecondary"
