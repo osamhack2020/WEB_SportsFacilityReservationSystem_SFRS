@@ -4,7 +4,10 @@ import TableHead from "@material-ui/core/TableHead";
 import TableBody from "@material-ui/core/TableBody";
 import TableRow from "@material-ui/core/TableRow";
 import Typography from "@material-ui/core/Typography";
+import Card from "@material-ui/core/Card";
 import TableCell from "@material-ui/core/TableCell";
+import CardActions from "@material-ui/core/CardActions";
+import CardContent from "@material-ui/core/CardContent";
 import { makeStyles } from "@material-ui/core/styles";
 import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import Container from "@material-ui/core/Container";
@@ -16,6 +19,11 @@ import Slide from "@material-ui/core/Slide";
 import TableContainer from "@material-ui/core/TableContainer";
 import Button from "@material-ui/core/Button";
 import FormControl from "@material-ui/core/FormControl";
+import BottomNavigation from "@material-ui/core/BottomNavigation";
+import GroupIcon from "@material-ui/icons/Group";
+import FormatQuoteIcon from "@material-ui/icons/FormatQuote";
+import Grid from "@material-ui/core/Grid";
+import BottomNavigationAction from "@material-ui/core/BottomNavigationAction";
 import Input from "@material-ui/core/Input";
 import app from "./firebase";
 import CircularProgress from "@material-ui/core/CircularProgress";
@@ -33,6 +41,25 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: "flex-end",
     display: "flex",
   },
+  root: {
+    backgroundColor: "#fafafa",
+    width: 500,
+  },
+  heroButtons: {
+    marginTop: theme.spacing(4),
+  },
+  navigationStyle: {
+    "&$navigationSelected": {
+      marginTop: "10px",
+      fontSize: "14px",
+      fontFamily: ["Jua", '"sans-serif"'],
+    },
+    fontSize: "14px",
+    marginTop: "10px",
+    fontFamily: ["Jua", '"sans-serif"'],
+  },
+  navigationSelected: {},
+
   backdrop: {
     zIndex: theme.zIndex.drawer + 1,
     color: "#fff",
@@ -170,6 +197,8 @@ const BoardPage = () => {
   const [isModify, setIsModify] = React.useState(false);
   const [modifySuccessSB, setModifySuccessSB] = React.useState(false);
   const [deleteSuccessSB, setDeleteSuccessSB] = React.useState(false);
+  const [value, setValue] = React.useState("1");
+  const [tournaments, setTournaments] = React.useState([]);
 
   const showMore = async () => {
     const lastContent = boardContent[boardContent.length - 1].writeDate;
@@ -351,6 +380,23 @@ const BoardPage = () => {
   React.useEffect(() => {
     app
       .firestore()
+      .collection("tournament")
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setTournaments((oldArray) => [
+            ...oldArray,
+            {
+              title: doc.id,
+              camp: doc.data().camp,
+              enrollNumber: doc.data().enrollNumber,
+            },
+          ]);
+        });
+      });
+
+    app
+      .firestore()
       .collection("board")
       .where("adminWrite", "==", false)
       .get()
@@ -447,7 +493,7 @@ const BoardPage = () => {
             color="textPrimary"
             className={classes.breadcrumbsTypography}
           >
-            자유게시판
+            게시판
           </Typography>
         </Breadcrumbs>
         <div className={classes.heroContent}>
@@ -458,443 +504,539 @@ const BoardPage = () => {
               color="textPrimary"
               className={classes.typography}
             >
-              자유게시판
+              게시판
             </Typography>
           </Container>
         </div>
-        <div className={classes.layout}>
-          <div className={classes.buttons}>
-            {isUserAdmin ? (
-              <Button
-                // variant="contained"
-                color="secondary"
-                onClick={() => setOpenAdminModal(true)}
-              >
-                관리자 글쓰기
-              </Button>
-            ) : (
-              <div></div>
-            )}
-            {showAddButton ? (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => setOpenModal(true)}
-              >
-                글쓰기
-              </Button>
-            ) : (
-              <div></div>
-            )}
-          </div>
-
-          <Paper className={classes.paper}>
-            <Table className={classes.typography}>
-              <TableHead className={classes.tableHead}>
-                <TableRow>
-                  <TableCell>번호</TableCell>
-                  <TableCell>제목</TableCell>
-                  <TableCell>작성자</TableCell>
-                  <TableCell>등록일</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody className={classes.tableBody}>
-                {adminBoardContent.map((content) => (
-                  <TableRow
-                    key={content.key}
-                    hover
-                    onClick={() => showMoreContent(content.key)}
-                  >
-                    <TableCell style={{ paddingLeft: "11px" }}>
-                      <NotificationsIcon fontSize="small" />
-                    </TableCell>
-                    <TableCell>{content.title}</TableCell>
-                    <TableCell>관리자</TableCell>
-                    <TableCell>
-                      {moment(content.writeDate.toDate()).format(
-                        "YYYY/MM/DD hh:mm"
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {boardContent.map((content, index) => (
-                  <TableRow
-                    key={content.key}
-                    hover
-                    onClick={() => showMoreContent(content.key)}
-                  >
-                    <TableCell>{boardCount - index}</TableCell>
-                    <TableCell>{content.title}</TableCell>
-                    <TableCell>{content.writer}</TableCell>
-                    <TableCell>
-                      {moment(content.writeDate.toDate()).format(
-                        "YYYY/MM/DD hh:mm"
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Paper>
-
-          {showMoreButton ? (
-            <IconButton
-              color="primary"
-              aria-label="upload picture"
-              component="span"
-              className={classes.modal}
-              onClick={showMore}
-            >
-              <ExpandMoreIcon style={{ fontSize: 40 }} />
-            </IconButton>
-          ) : (
-            <div></div>
-          )}
+        <div>
+          <Container>
+            <div className={classes.heroButtons}>
+              <Grid container spacing={2} justify="center">
+                <BottomNavigation
+                  value={value}
+                  onChange={(event, newValue) => {
+                    setValue(newValue);
+                  }}
+                  showLabels
+                  className={classes.root}
+                >
+                  <BottomNavigationAction
+                    classes={{
+                      label: classes.navigationStyle,
+                      selected: classes.navigationSelected,
+                    }}
+                    label="자유게시판"
+                    value="1"
+                    icon={<FormatQuoteIcon />}
+                  />
+                  <BottomNavigationAction
+                    classes={{
+                      label: classes.navigationStyle,
+                      selected: classes.navigationSelected,
+                    }}
+                    label="체육대회"
+                    value="2"
+                    icon={<GroupIcon />}
+                  />
+                </BottomNavigation>
+              </Grid>
+            </div>
+          </Container>
         </div>
-        <Snackbar
-          autoHideDuration={1200}
-          open={snackbar}
-          onClose={() => setSnackbar(false)}
-          TransitionComponent={Slide}
-          message="글이 등록되었습니다."
-        />
-        <Snackbar
-          autoHideDuration={1200}
-          open={modifySuccessSB}
-          onClose={() => setModifySuccessSB(false)}
-          TransitionComponent={Slide}
-          message="글이 수정되었습니다."
-        />{" "}
-        <Snackbar
-          autoHideDuration={1200}
-          open={deleteSuccessSB}
-          onClose={() => setDeleteSuccessSB(false)}
-          TransitionComponent={Slide}
-          message="글이 삭제되었습니다."
-        />
-        <Modal
-          className={classes.modal}
-          open={openModal}
-          onClose={modalClose}
-          closeAfterTransition
-          BackdropComponent={Backdrop}
-          BackdropProps={{
-            timeout: 500,
-          }}
-        >
-          <Slide direction="up" in={openModal}>
-            <div className={classes.papers}>
-              <Container component="main" maxWidth="md">
-                <Typography className={classes.modalTypography}>
-                  자유게시판
-                </Typography>
-                <TableContainer
-                  component={Paper}
-                  className={classes.tableContainer}
-                >
-                  <Table>
-                    <TableBody>
-                      <TableRow key="title">
-                        <TableCell
-                          component="th"
-                          scope="row"
-                          className={classes.tableRow}
-                        >
-                          제목
-                        </TableCell>
-                        <th
-                          style={{
-                            borderBottom: "1px solid rgba(224, 224, 224, 1)",
-                          }}
-                        >
-                          <FormControl fullWidth error={titleError}>
-                            <Input
-                              value={title}
-                              onChange={({ target: { value } }) =>
-                                setTitle(value)
-                              }
-                              type="text"
-                              className={classes.textField}
-                              placeholder="제목을 입력하십시오."
-                            />
-                          </FormControl>
-                        </th>
-                      </TableRow>
-                      <TableRow key="writerName">
-                        <TableCell
-                          component="th"
-                          scope="row"
-                          className={classes.tableRow}
-                        >
-                          작성자
-                        </TableCell>
-                        <TableCell align="left" className={classes.tableCell}>
-                          {userData}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow key="content">
-                        <TableCell
-                          component="th"
-                          scope="row"
-                          className={classes.tableRow}
-                        >
-                          내용
-                        </TableCell>
-                        <th>
-                          <FormControl fullWidth error={contentError}>
-                            <Input
-                              value={content}
-                              onChange={({ target: { value } }) =>
-                                setContent(value)
-                              }
-                              multiline
-                              rows={4}
-                              type="text"
-                              className={classes.textField}
-                              placeholder="내용을 입력하십시오."
-                            />
-                          </FormControl>
-                        </th>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-                <span className={classes.modalButtons}>
+        {value === "1" ? (
+          <div>
+            <div className={classes.layout}>
+              <div className={classes.buttons}>
+                {isUserAdmin ? (
                   <Button
-                    onClick={() => addBoard(false)}
+                    // variant="contained"
+                    color="secondary"
+                    onClick={() => setOpenAdminModal(true)}
+                  >
+                    관리자 글쓰기
+                  </Button>
+                ) : (
+                  <div></div>
+                )}
+                {showAddButton ? (
+                  <Button
                     variant="contained"
                     color="primary"
-                    className={classes.button}
+                    onClick={() => setOpenModal(true)}
                   >
-                    확인
+                    글쓰기
                   </Button>
-                  <Backdrop className={classes.backdrop} open={openProgress}>
-                    <CircularProgress color="inherit" />
-                  </Backdrop>
+                ) : (
+                  <div></div>
+                )}
+              </div>
 
-                  <Button
-                    onClick={modalClose}
-                    variant="contained"
-                    color="secondary"
-                    className={classes.button}
-                  >
-                    닫기
-                  </Button>
-                </span>
-              </Container>
-            </div>
-          </Slide>
-        </Modal>
-        <Modal
-          className={classes.modal}
-          open={openAdminModal}
-          onClose={modalClose}
-          closeAfterTransition
-          BackdropComponent={Backdrop}
-          BackdropProps={{
-            timeout: 500,
-          }}
-        >
-          <Slide direction="up" in={openAdminModal}>
-            <div className={classes.papers}>
-              <Container component="main" maxWidth="md">
-                <Typography className={classes.modalTypography}>
-                  관리자 글쓰기
-                </Typography>
-                <TableContainer
-                  component={Paper}
-                  className={classes.tableContainer}
-                >
-                  <Table>
-                    <TableBody>
-                      <TableRow key="title">
-                        <TableCell
-                          component="th"
-                          scope="row"
-                          className={classes.tableRow}
-                        >
-                          제목
-                        </TableCell>
-                        <th
-                          style={{
-                            borderBottom: "1px solid rgba(224, 224, 224, 1)",
-                          }}
-                        >
-                          <FormControl fullWidth error={titleError}>
-                            <Input
-                              value={title}
-                              onChange={({ target: { value } }) =>
-                                setTitle(value)
-                              }
-                              type="text"
-                              className={classes.textField}
-                              placeholder="제목을 입력하십시오."
-                            />
-                          </FormControl>
-                        </th>
-                      </TableRow>
-                      <TableRow key="writerName">
-                        <TableCell
-                          component="th"
-                          scope="row"
-                          className={classes.tableRow}
-                        >
-                          작성자
-                        </TableCell>
-                        <TableCell align="left" className={classes.tableCell}>
-                          관리자
-                        </TableCell>
-                      </TableRow>
-                      <TableRow key="content">
-                        <TableCell
-                          component="th"
-                          scope="row"
-                          className={classes.tableRow}
-                        >
-                          내용
-                        </TableCell>
-                        <th>
-                          <FormControl fullWidth error={contentError}>
-                            <Input
-                              value={content}
-                              onChange={({ target: { value } }) =>
-                                setContent(value)
-                              }
-                              multiline
-                              rows={4}
-                              type="text"
-                              className={classes.textField}
-                              placeholder="내용을 입력하십시오."
-                            />
-                          </FormControl>
-                        </th>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-
-                <span className={classes.modalButtons}>
-                  <Button
-                    onClick={() => addBoard(true)}
-                    variant="contained"
-                    color="primary"
-                    className={classes.button}
-                  >
-                    확인
-                  </Button>
-                  <Backdrop className={classes.backdrop} open={openProgress}>
-                    <CircularProgress color="inherit" />
-                  </Backdrop>
-                  <Button
-                    onClick={modalClose}
-                    variant="contained"
-                    color="secondary"
-                    className={classes.button}
-                  >
-                    닫기
-                  </Button>
-                </span>
-              </Container>
-            </div>
-          </Slide>
-        </Modal>
-        <Modal
-          className={classes.modal}
-          open={openContentModal}
-          onClose={modalClose}
-          closeAfterTransition
-          BackdropComponent={Backdrop}
-          BackdropProps={{
-            timeout: 500,
-          }}
-        >
-          <Slide direction="up" in={openContentModal}>
-            <div className={classes.papers}>
-              <Container component="main" maxWidth="md">
-                <Typography className={classes.modalTypography}>
-                  자유게시판
-                </Typography>
-                <TableContainer
-                  component={Paper}
-                  className={classes.tableContainer}
-                >
-                  <Table>
-                    <TableBody>
-                      <TableRow key="title">
-                        <TableCell
-                          component="th"
-                          scope="row"
-                          className={classes.tableRow}
-                        >
-                          제목
-                        </TableCell>
-                        <TableCell align="left" className={classes.tableCell}>
-                          {modalContent.title}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow key="writerName">
-                        <TableCell
-                          component="th"
-                          scope="row"
-                          className={classes.tableRow}
-                        >
-                          작성자
-                        </TableCell>
-                        <TableCell align="left" className={classes.tableCell}>
-                          {modalContent.writer}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow key="content">
-                        <TableCell
-                          component="th"
-                          scope="row"
-                          className={classes.tableRow}
-                        >
-                          내용
-                        </TableCell>
-                        <TableCell align="left" className={classes.tableCell}>
-                          {modalContent.content}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-
-                <span className={classes.modalButtons}>
-                  {modalContent.userId === userId ? (
-                    <span>
-                      <Button
-                        onClick={() => deleteModal(modalContent.documentId)}
-                        variant="contained"
-                        color="secondary"
-                        className={classes.button}
+              <Paper className={classes.paper}>
+                <Table className={classes.typography}>
+                  <TableHead className={classes.tableHead}>
+                    <TableRow>
+                      <TableCell>번호</TableCell>
+                      <TableCell>제목</TableCell>
+                      <TableCell>작성자</TableCell>
+                      <TableCell>등록일</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody className={classes.tableBody}>
+                    {adminBoardContent.map((content) => (
+                      <TableRow
+                        key={content.key}
+                        hover
+                        onClick={() => showMoreContent(content.key)}
                       >
-                        삭제
-                      </Button>
+                        <TableCell style={{ paddingLeft: "11px" }}>
+                          <NotificationsIcon fontSize="small" />
+                        </TableCell>
+                        <TableCell>{content.title}</TableCell>
+                        <TableCell>관리자</TableCell>
+                        <TableCell>
+                          {moment(content.writeDate.toDate()).format(
+                            "YYYY/MM/DD hh:mm"
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {boardContent.map((content, index) => (
+                      <TableRow
+                        key={content.key}
+                        hover
+                        onClick={() => showMoreContent(content.key)}
+                      >
+                        <TableCell>{boardCount - index}</TableCell>
+                        <TableCell>{content.title}</TableCell>
+                        <TableCell>{content.writer}</TableCell>
+                        <TableCell>
+                          {moment(content.writeDate.toDate()).format(
+                            "YYYY/MM/DD hh:mm"
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Paper>
+
+              {showMoreButton ? (
+                <IconButton
+                  color="primary"
+                  aria-label="upload picture"
+                  component="span"
+                  className={classes.modal}
+                  onClick={showMore}
+                >
+                  <ExpandMoreIcon style={{ fontSize: 40 }} />
+                </IconButton>
+              ) : (
+                <div></div>
+              )}
+            </div>
+            <Snackbar
+              autoHideDuration={1200}
+              open={snackbar}
+              onClose={() => setSnackbar(false)}
+              TransitionComponent={Slide}
+              message="글이 등록되었습니다."
+            />
+            <Snackbar
+              autoHideDuration={1200}
+              open={modifySuccessSB}
+              onClose={() => setModifySuccessSB(false)}
+              TransitionComponent={Slide}
+              message="글이 수정되었습니다."
+            />{" "}
+            <Snackbar
+              autoHideDuration={1200}
+              open={deleteSuccessSB}
+              onClose={() => setDeleteSuccessSB(false)}
+              TransitionComponent={Slide}
+              message="글이 삭제되었습니다."
+            />
+            <Modal
+              className={classes.modal}
+              open={openModal}
+              onClose={modalClose}
+              closeAfterTransition
+              BackdropComponent={Backdrop}
+              BackdropProps={{
+                timeout: 500,
+              }}
+            >
+              <Slide direction="up" in={openModal}>
+                <div className={classes.papers}>
+                  <Container component="main" maxWidth="md">
+                    <Typography className={classes.modalTypography}>
+                      자유게시판
+                    </Typography>
+                    <TableContainer
+                      component={Paper}
+                      className={classes.tableContainer}
+                    >
+                      <Table>
+                        <TableBody>
+                          <TableRow key="title">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              제목
+                            </TableCell>
+                            <th
+                              style={{
+                                borderBottom:
+                                  "1px solid rgba(224, 224, 224, 1)",
+                              }}
+                            >
+                              <FormControl fullWidth error={titleError}>
+                                <Input
+                                  value={title}
+                                  onChange={({ target: { value } }) =>
+                                    setTitle(value)
+                                  }
+                                  type="text"
+                                  className={classes.textField}
+                                  placeholder="제목을 입력하십시오."
+                                />
+                              </FormControl>
+                            </th>
+                          </TableRow>
+                          <TableRow key="writerName">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              작성자
+                            </TableCell>
+                            <TableCell
+                              align="left"
+                              className={classes.tableCell}
+                            >
+                              {userData}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow key="content">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              내용
+                            </TableCell>
+                            <th>
+                              <FormControl fullWidth error={contentError}>
+                                <Input
+                                  value={content}
+                                  onChange={({ target: { value } }) =>
+                                    setContent(value)
+                                  }
+                                  multiline
+                                  rows={4}
+                                  type="text"
+                                  className={classes.textField}
+                                  placeholder="내용을 입력하십시오."
+                                />
+                              </FormControl>
+                            </th>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    <span className={classes.modalButtons}>
                       <Button
-                        onClick={() => modifyModal(modalContent.adminWrite)}
+                        onClick={() => addBoard(false)}
                         variant="contained"
                         color="primary"
                         className={classes.button}
                       >
-                        수정
+                        확인
+                      </Button>
+                      <Backdrop
+                        className={classes.backdrop}
+                        open={openProgress}
+                      >
+                        <CircularProgress color="inherit" />
+                      </Backdrop>
+
+                      <Button
+                        onClick={modalClose}
+                        variant="contained"
+                        color="secondary"
+                        className={classes.button}
+                      >
+                        닫기
                       </Button>
                     </span>
-                  ) : (
-                    <span></span>
-                  )}
-                  <Button
-                    onClick={modalClose}
-                    variant="contained"
-                    className={classes.button}
-                  >
-                    닫기
-                  </Button>
-                </span>
-              </Container>
-            </div>
-          </Slide>
-        </Modal>
+                  </Container>
+                </div>
+              </Slide>
+            </Modal>
+            <Modal
+              className={classes.modal}
+              open={openAdminModal}
+              onClose={modalClose}
+              closeAfterTransition
+              BackdropComponent={Backdrop}
+              BackdropProps={{
+                timeout: 500,
+              }}
+            >
+              <Slide direction="up" in={openAdminModal}>
+                <div className={classes.papers}>
+                  <Container component="main" maxWidth="md">
+                    <Typography className={classes.modalTypography}>
+                      관리자 글쓰기
+                    </Typography>
+                    <TableContainer
+                      component={Paper}
+                      className={classes.tableContainer}
+                    >
+                      <Table>
+                        <TableBody>
+                          <TableRow key="title">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              제목
+                            </TableCell>
+                            <th
+                              style={{
+                                borderBottom:
+                                  "1px solid rgba(224, 224, 224, 1)",
+                              }}
+                            >
+                              <FormControl fullWidth error={titleError}>
+                                <Input
+                                  value={title}
+                                  onChange={({ target: { value } }) =>
+                                    setTitle(value)
+                                  }
+                                  type="text"
+                                  className={classes.textField}
+                                  placeholder="제목을 입력하십시오."
+                                />
+                              </FormControl>
+                            </th>
+                          </TableRow>
+                          <TableRow key="writerName">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              작성자
+                            </TableCell>
+                            <TableCell
+                              align="left"
+                              className={classes.tableCell}
+                            >
+                              관리자
+                            </TableCell>
+                          </TableRow>
+                          <TableRow key="content">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              내용
+                            </TableCell>
+                            <th>
+                              <FormControl fullWidth error={contentError}>
+                                <Input
+                                  value={content}
+                                  onChange={({ target: { value } }) =>
+                                    setContent(value)
+                                  }
+                                  multiline
+                                  rows={4}
+                                  type="text"
+                                  className={classes.textField}
+                                  placeholder="내용을 입력하십시오."
+                                />
+                              </FormControl>
+                            </th>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+
+                    <span className={classes.modalButtons}>
+                      <Button
+                        onClick={() => addBoard(true)}
+                        variant="contained"
+                        color="primary"
+                        className={classes.button}
+                      >
+                        확인
+                      </Button>
+                      <Backdrop
+                        className={classes.backdrop}
+                        open={openProgress}
+                      >
+                        <CircularProgress color="inherit" />
+                      </Backdrop>
+                      <Button
+                        onClick={modalClose}
+                        variant="contained"
+                        color="secondary"
+                        className={classes.button}
+                      >
+                        닫기
+                      </Button>
+                    </span>
+                  </Container>
+                </div>
+              </Slide>
+            </Modal>
+            <Modal
+              className={classes.modal}
+              open={openContentModal}
+              onClose={modalClose}
+              closeAfterTransition
+              BackdropComponent={Backdrop}
+              BackdropProps={{
+                timeout: 500,
+              }}
+            >
+              <Slide direction="up" in={openContentModal}>
+                <div className={classes.papers}>
+                  <Container component="main" maxWidth="md">
+                    <Typography className={classes.modalTypography}>
+                      자유게시판
+                    </Typography>
+                    <TableContainer
+                      component={Paper}
+                      className={classes.tableContainer}
+                    >
+                      <Table>
+                        <TableBody>
+                          <TableRow key="title">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              제목
+                            </TableCell>
+                            <TableCell
+                              align="left"
+                              className={classes.tableCell}
+                            >
+                              {modalContent.title}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow key="writerName">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              작성자
+                            </TableCell>
+                            <TableCell
+                              align="left"
+                              className={classes.tableCell}
+                            >
+                              {modalContent.writer}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow key="content">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              내용
+                            </TableCell>
+                            <TableCell
+                              align="left"
+                              className={classes.tableCell}
+                            >
+                              {modalContent.content}
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+
+                    <span className={classes.modalButtons}>
+                      {modalContent.userId === userId ? (
+                        <span>
+                          <Button
+                            onClick={() => deleteModal(modalContent.documentId)}
+                            variant="contained"
+                            color="secondary"
+                            className={classes.button}
+                          >
+                            삭제
+                          </Button>
+                          <Button
+                            onClick={() => modifyModal(modalContent.adminWrite)}
+                            variant="contained"
+                            color="primary"
+                            className={classes.button}
+                          >
+                            수정
+                          </Button>
+                        </span>
+                      ) : (
+                        <span></span>
+                      )}
+                      <Button
+                        onClick={modalClose}
+                        variant="contained"
+                        className={classes.button}
+                      >
+                        닫기
+                      </Button>
+                    </span>
+                  </Container>
+                </div>
+              </Slide>
+            </Modal>
+          </div>
+        ) : (
+          <Container className={classes.cardGrid} maxWidth="md">
+            <Grid container spacing={4}>
+              {tournaments.map((tournament) => (
+                <Grid item key={tournament} xs={12} sm={6} md={4}>
+                  <Card className={classes.card}>
+                    <CardContent className={classes.cardContent}>
+                      <Typography
+                        variant="h5"
+                        component="h2"
+                        className={classes.typography}
+                      >
+                        {tournament.title}
+                      </Typography>
+                    </CardContent>
+                    {/* <CardActions className={classes.cardButton}>
+                      <Button
+                        color="primary"
+                        onClick={() => showFacility(tournament)}
+                      >
+                        자세히
+                      </Button>
+                      <Button
+                        color="primary"
+                        onClick={() => createTournament(tournament)}
+                      >
+                        체육대회 개최
+                      </Button>
+                    </CardActions> */}
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Container>
+        )}
       </main>
       <footer className={classes.footer}>
         <Typography

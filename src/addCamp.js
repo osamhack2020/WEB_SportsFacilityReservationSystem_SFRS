@@ -358,7 +358,6 @@ const AddCamp = () => {
       .get()
       .then((snapshot) => {
         snapshot.forEach((doc) => {
-          console.log("hello");
           setInputFields((oldArray) => [
             ...oldArray,
             { facility: doc.id, location: doc.data().location },
@@ -370,8 +369,6 @@ const AddCamp = () => {
           ]);
         });
       });
-
-    console.log(facilityError);
   };
 
   const showPendingFacility = (camp) => {
@@ -417,16 +414,15 @@ const AddCamp = () => {
       return;
     }
 
-    setTimeout(() => {
-      setOpenProgress(false);
-    }, 400);
-
     await app
       .firestore()
       .collection("tournament")
       .doc(tournamentName)
       .set({ camp: tournamentCamp, enrollNumber: tournamentEnrollNumber });
 
+    setTimeout(() => {
+      setOpenProgress(false);
+    }, 400);
     setTournamentSnackbar(true);
     setTimeout(() => {
       eraseTournament();
@@ -671,6 +667,12 @@ const AddCamp = () => {
                             TransitionComponent={Slide}
                             message="체육대회를 개최하였습니다."
                           />
+                          <Backdrop
+                            className={classes.backdrop}
+                            open={openProgress}
+                          >
+                            <CircularProgress color="inherit" />
+                          </Backdrop>
                         </span>
                       </Container>
                     </div>
@@ -931,6 +933,12 @@ const AddCamp = () => {
                                     TransitionComponent={Slide}
                                     message="부대를 추가하였습니다. 관리자의 승인을 기다립니다."
                                   />
+                                  <Backdrop
+                                    className={classes.backdrop}
+                                    open={openProgress}
+                                  >
+                                    <CircularProgress color="inherit" />
+                                  </Backdrop>
                                   <Button
                                     onClick={handleClose}
                                     variant="contained"
