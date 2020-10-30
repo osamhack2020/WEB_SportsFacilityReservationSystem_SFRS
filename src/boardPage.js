@@ -98,6 +98,9 @@ const useStyles = makeStyles((theme) => ({
   tableContainer: {
     maxHeight: 400,
   },
+  tableContainers: {
+    maxHeight: 500,
+  },
   tableHead: {
     color: theme.palette.common.white,
     fontFamily: ["Jua", '"sans-serif"'],
@@ -228,10 +231,125 @@ const BoardPage = () => {
   const [tournamentEnrollModal, setTournamentEnrollModal] = React.useState(
     false
   );
+  const [enrollTeamName, setEnrollTeamName] = React.useState("");
+  const [enrollTeamNameError, setEnrollTeamNameError] = React.useState(false);
+  const [enrollTeamMemberLength, setEnrollTeamMemberLength] = React.useState(
+    ""
+  );
+  const [
+    enrollTeamMemeberLengthError,
+    setEnrollTeamMemberLengthError,
+  ] = React.useState(false);
+  const [enrollTeamLeaderName, setEnrollTeamLeaderName] = React.useState("");
+  const [
+    enrollTeamLeaderNameError,
+    setEnrollTeamLeaderNameError,
+  ] = React.useState(false);
+  const [tempInfo, setTempInfo] = React.useState({});
+  const [enrollSnack, setEnrollSnack] = React.useState(false);
+  const [enrollSnackAgain, setEnrollSnackAgain] = React.useState(false);
+  const [authUserId, setAuthUserId] = React.useState("");
+  const [isUserEnrolled, setIsUserEnrolled] = React.useState(false);
+  const [enrolledSize, setEnrolledSize] = React.useState(0);
 
   const detailModalClose = () => {
     setTournamentDetailModal(false);
-    setTournamentDetail({});
+    setTournamentEnrollModal(false);
+    setEnrollTeamMemberLengthError(false);
+    setEnrollTeamLeaderNameError(false);
+    setEnrollTeamNameError(false);
+    setEnrollTeamName("");
+    setEnrollTeamLeaderName("");
+    setEnrollTeamMemberLength("");
+  };
+
+  const closeEnrollModal = () => {
+    setTournamentEnrollModal(false);
+
+    setEnrollTeamMemberLengthError(false);
+    setEnrollTeamLeaderNameError(false);
+    setEnrollTeamNameError(false);
+    setEnrollTeamName("");
+    setEnrollTeamLeaderName("");
+    setEnrollTeamMemberLength("");
+  };
+
+  const enrollTournament = (info) => {
+    app
+      .firestore()
+      .collection("tournament")
+      .doc(info.title)
+      .collection("enroll")
+      .where("uid", "==", authUserId)
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setIsUserEnrolled(true);
+        });
+      });
+
+    app
+      .firestore()
+      .collection("tournament")
+      .doc(info.title)
+      .collection("enroll")
+      .get()
+      .then((snapshot) => {
+        setEnrolledSize(snapshot.size);
+      });
+
+    setTournamentEnrollModal(true);
+    setTempInfo(info);
+  };
+
+  const submitEnrollment = async () => {
+    setOpenProgress(true);
+    setEnrollTeamNameError(false);
+    setEnrollTeamMemberLengthError(false);
+    setEnrollTeamLeaderNameError(false);
+    setTimeout(() => {
+      setOpenProgress(false);
+    }, 400);
+
+    if (isUserEnrolled) {
+      setEnrollSnackAgain(true);
+      return;
+    } else if (enrollTeamName === "") {
+      setEnrollTeamNameError(true);
+      return;
+    } else if (enrollTeamLeaderName === "") {
+      setEnrollTeamLeaderNameError(true);
+      return;
+    } else if (enrollTeamMemberLength === "") {
+      setEnrollTeamMemberLengthError(true);
+      return;
+    }
+
+    app
+      .firestore()
+      .collection("tournament")
+      .doc(tempInfo.title)
+      .collection("enroll")
+      .add({
+        enrollTeamName,
+        enrollTeamLeaderName,
+        enrollTeamMemberLength,
+        enrollTime: new Date(),
+        uid: authUserId,
+      });
+
+    app
+      .firestore()
+      .collection("tournament")
+      .doc(tempInfo.title)
+      .update({
+        currentEnrolledTeamCount: enrolledSize + 1,
+      });
+
+    setEnrollSnack(true);
+    setTimeout(() => {
+      detailModalClose();
+    }, 1200);
   };
 
   const showMore = async () => {
@@ -411,12 +529,6 @@ const BoardPage = () => {
     modalCloseAndUpdate();
   };
 
-  const enrollTournament = (info) => {
-    setTournamentEnrollModal(true);
-
-    console.log(info);
-  };
-
   const showTournament = (tournament) => {
     setTournamentDetailModal(true);
 
@@ -427,10 +539,20 @@ const BoardPage = () => {
       .get()
       .then((snapshot) => {
         setTournamentDetail({
+          isRecruitNotEnd:
+            new Date().getTime() < snapshot.data().recruitEndDate.seconds * 1000
+              ? true
+              : false,
+          isRecruitFull:
+            snapshot.data().currentEnrolledTeamCount <
+            snapshot.data().enrollNumber
+              ? false
+              : true,
           title: tournament.title,
           camp: snapshot.data().camp,
           facility: snapshot.data().facility,
           enrollNumber: snapshot.data().enrollNumber,
+          currentEnrolledTeamCount: snapshot.data().currentEnrolledTeamCount,
           prize: snapshot.data().prize,
           recruitEndDate: snapshot.data().recruitEndDate.seconds * 1000,
           sport: snapshot.data().sport,
@@ -444,6 +566,7 @@ const BoardPage = () => {
   React.useEffect(() => {
     app.auth().onAuthStateChanged(async (user) => {
       if (user) {
+        setAuthUserId(user.uid);
         setShowAddButton(true);
         await app
           .firestore()
@@ -1080,20 +1203,28 @@ const BoardPage = () => {
                 </Typography>
               ) : (
                 tournaments.map((tournament) => (
-                  <Grid item key={tournament} xs={12} sm={6} md={4}>
+                  <Grid item key={tournament.title} xs={12} sm={6} md={4}>
                     <Card className={classes.card}>
                       <CardHeader
                         style={{ padding: "8px" }}
                         avatar={
-                          tournament.currentEnrolledTeamCount <
-                          tournament.enrollNumber ? (
-                            <Chip label="모집중" size="small" color="primary" />
+                          new Date().getTime() < tournament.recruitEndDate ? (
+                            tournament.currentEnrolledTeamCount <
+                            tournament.enrollNumber ? (
+                              <Chip
+                                label="모집중"
+                                size="small"
+                                color="primary"
+                              />
+                            ) : (
+                              <Chip
+                                label="모집완료"
+                                size="small"
+                                color="secondary"
+                              />
+                            )
                           ) : (
-                            <Chip
-                              label="모집완료"
-                              size="small"
-                              color="secondary"
-                            />
+                            <Chip label="모집종료" size="small" />
                           )
                         }
                       />
@@ -1152,7 +1283,7 @@ const BoardPage = () => {
                     </Typography>
                     <TableContainer
                       component={Paper}
-                      className={classes.tableContainer}
+                      className={classes.tableContainers}
                     >
                       <Table>
                         <TableBody>
@@ -1234,6 +1365,22 @@ const BoardPage = () => {
                             </TableCell>
                           </TableRow>
 
+                          <TableRow key="currentEnrolledTeamCount">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              현재 참가팀 수
+                            </TableCell>
+                            <TableCell
+                              align="left"
+                              className={classes.tableCell}
+                            >
+                              {tournamentDetail.currentEnrolledTeamCount}
+                            </TableCell>
+                          </TableRow>
+
                           <TableRow key="recruitEndDate">
                             <TableCell
                               component="th"
@@ -1274,14 +1421,167 @@ const BoardPage = () => {
                     </TableContainer>
 
                     <span className={classes.modalButton}>
-                      <Button
-                        onClick={() => enrollTournament(tournamentDetail)}
-                        variant="contained"
-                        color="primary"
-                        className={classes.button}
+                      {tournamentDetail.isRecruitNotEnd ? (
+                        !tournamentDetail.isRecruitFull ? (
+                          <Button
+                            onClick={() => enrollTournament(tournamentDetail)}
+                            variant="contained"
+                            color="primary"
+                            className={classes.button}
+                          >
+                            참가하기
+                          </Button>
+                        ) : (
+                          <div></div>
+                        )
+                      ) : (
+                        <span></span>
+                      )}
+
+                      <Modal
+                        className={classes.modal}
+                        open={tournamentEnrollModal}
+                        onClose={closeEnrollModal}
+                        closeAfterTransition
+                        BackdropComponent={Backdrop}
+                        BackdropProps={{
+                          timeout: 500,
+                        }}
                       >
-                        참가하기
-                      </Button>
+                        <Slide direction="up" in={tournamentEnrollModal}>
+                          <div className={classes.papers}>
+                            <Container component="main" maxWidth="md">
+                              <Typography className={classes.modalTypography}>
+                                {tournamentDetail.title} &nbsp; 참가신청서
+                              </Typography>
+                              <TableContainer
+                                component={Paper}
+                                className={classes.tableContainer}
+                              >
+                                <Table>
+                                  <TableBody>
+                                    <TableRow key="teamName">
+                                      <TableCell
+                                        component="th"
+                                        scope="row"
+                                        className={classes.tableRow}
+                                      >
+                                        팀명
+                                      </TableCell>
+                                      <TableCell style={{ padding: 0 }}>
+                                        <FormControl
+                                          fullWidth
+                                          error={enrollTeamNameError}
+                                        >
+                                          <Input
+                                            value={enrollTeamName}
+                                            onChange={({ target: { value } }) =>
+                                              setEnrollTeamName(value)
+                                            }
+                                            type="text"
+                                            className={classes.textField}
+                                            placeholder="팀명을 입력해주십시오."
+                                          />
+                                        </FormControl>
+                                      </TableCell>
+                                    </TableRow>
+
+                                    <TableRow key="teamLeaderName">
+                                      <TableCell
+                                        component="th"
+                                        scope="row"
+                                        className={classes.tableRow}
+                                      >
+                                        팀대표 성명
+                                      </TableCell>
+                                      <TableCell style={{ padding: 0 }}>
+                                        <FormControl
+                                          fullWidth
+                                          error={enrollTeamLeaderNameError}
+                                        >
+                                          <Input
+                                            value={enrollTeamLeaderName}
+                                            onChange={({ target: { value } }) =>
+                                              setEnrollTeamLeaderName(value)
+                                            }
+                                            type="text"
+                                            className={classes.textField}
+                                            placeholder="팀대표 성명을 입력해주십시오."
+                                          />
+                                        </FormControl>
+                                      </TableCell>
+                                    </TableRow>
+
+                                    <TableRow key="teamMemberLength">
+                                      <TableCell
+                                        component="th"
+                                        scope="row"
+                                        className={classes.tableRow}
+                                      >
+                                        팀원 수
+                                      </TableCell>
+                                      <TableCell style={{ padding: 0 }}>
+                                        <FormControl
+                                          fullWidth
+                                          error={enrollTeamMemeberLengthError}
+                                        >
+                                          <Input
+                                            value={enrollTeamMemberLength}
+                                            onChange={({ target: { value } }) =>
+                                              setEnrollTeamMemberLength(value)
+                                            }
+                                            type="text"
+                                            className={classes.textField}
+                                            placeholder="팀원 수를 입력해주십시오."
+                                          />
+                                        </FormControl>
+                                      </TableCell>
+                                    </TableRow>
+                                  </TableBody>
+                                </Table>
+                              </TableContainer>
+
+                              <span className={classes.modalButton}>
+                                <Button
+                                  onClick={submitEnrollment}
+                                  variant="contained"
+                                  color="primary"
+                                  className={classes.button}
+                                >
+                                  제출하기
+                                </Button>
+                                <Backdrop
+                                  className={classes.backdrop}
+                                  open={openProgress}
+                                >
+                                  <CircularProgress color="inherit" />
+                                </Backdrop>
+                                <Snackbar
+                                  autoHideDuration={1200}
+                                  open={enrollSnack}
+                                  onClose={() => setEnrollSnack(false)}
+                                  TransitionComponent={Slide}
+                                  message="체육대회 참가신청이 완료되었습니다."
+                                />
+                                <Snackbar
+                                  autoHideDuration={1200}
+                                  open={enrollSnackAgain}
+                                  onClose={() => setEnrollSnackAgain(false)}
+                                  TransitionComponent={Slide}
+                                  message="이미 해당 체육대회에 참가하셨습니다."
+                                />
+                                <Button
+                                  onClick={closeEnrollModal}
+                                  variant="contained"
+                                  className={classes.button}
+                                >
+                                  닫기
+                                </Button>
+                              </span>
+                            </Container>
+                          </div>
+                        </Slide>
+                      </Modal>
                       <Button
                         onClick={detailModalClose}
                         variant="contained"

@@ -189,9 +189,8 @@ const SelectDate = ({ camp, facility, save, isView }) => {
     setReservationTitleError("");
     setStart(start);
     setEnd(end);
-    const today = new Date().getDate();
 
-    if (today + 1 <= start.getDate()) {
+    if (start.getTime() > moment().endOf("day").toDate().getTime()) {
       if (start.getDate() === end.getDate()) {
         if (count === 0) {
           setOpen(true);
