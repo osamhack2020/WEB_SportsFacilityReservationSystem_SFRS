@@ -98,12 +98,19 @@ const SelectDate = ({ camp, facility, save, isView }) => {
   const [end, setEnd] = React.useState(0);
   const [userData, setUserData] = React.useState({});
   const [userDataOpen, setUserDataOpen] = React.useState(false);
+  const [uid, setUid] = React.useState("");
+  const [overlappedSnack, setOverlappedSnack] = React.useState(false);
 
   React.useEffect(() => {
     fetchData(
       moment().startOf("isoWeek").toDate().getTime(),
       moment().endOf("isoWeek").toDate().getTime()
     );
+
+    app.auth().onAuthStateChanged(async (user) => {
+      if (user) setUid(user.uid);
+    });
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -186,16 +193,29 @@ const SelectDate = ({ camp, facility, save, isView }) => {
   };
 
   const handleSelect = async ({ start, end }) => {
-    setReservationTitleError("");
-    setStart(start);
-    setEnd(end);
-
+    let overlapped = false;
     if (start.getTime() > moment().endOf("day").toDate().getTime()) {
-      if (start.getDate() === end.getDate()) {
-        if (count === 0) {
-          setOpen(true);
+      events.forEach((value) => {
+        if (
+          value.uid === uid &&
+          value.start.getTime() >=
+            moment(start).startOf("day").toDate().getTime() &&
+          value.end.getTime() <= moment(end).endOf("day").toDate().getTime()
+        )
+          overlapped = true;
+      });
+
+      if (!overlapped) {
+        setReservationTitleError("");
+        setStart(start);
+        setEnd(end);
+
+        if (start.getDate() === end.getDate()) {
+          if (count === 0) {
+            setOpen(true);
+          }
         }
-      }
+      } else setOverlappedSnack(true);
     } else setSnackbarOpen(true);
   };
 
@@ -277,11 +297,18 @@ const SelectDate = ({ camp, facility, save, isView }) => {
       />
 
       <Snackbar
-        autoHideDuration={3000}
+        autoHideDuration={1000}
         open={snackbarOpen}
         onClose={() => setSnackbarOpen(false)}
         TransitionComponent={Slide}
         message="오늘로부터 하루지난 예약만 가능합니다."
+      />
+      <Snackbar
+        autoHideDuration={1000}
+        open={overlappedSnack}
+        onClose={() => setOverlappedSnack(false)}
+        TransitionComponent={Slide}
+        message="해당일에 이미 예약을 하셨습니다."
       />
 
       {/* 예약현황에서 캘린더를 클릭하면 세부사항 보여주는 모달 */}
