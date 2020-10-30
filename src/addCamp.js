@@ -290,6 +290,7 @@ const AddCamp = () => {
         startTournamentDate: moment(startTournamentDate, "YYYY-MM-DD").toDate(),
         sport: tournamentSport,
         uid: authUserId,
+        currentEnrolledTeamCount: 0,
       });
 
     setTournamentSnackbar(true);
@@ -1524,7 +1525,7 @@ const AddCamp = () => {
                             color="primary"
                             onClick={() => showPendingFacility(tournament)}
                           >
-                            자세히asd
+                            자세히
                           </Button>
                         </CardActions>
                       </Card>

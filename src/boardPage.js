@@ -178,6 +178,11 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     justifyContent: "flex-end",
   },
+  modalButton: {
+    marginTop: "10px",
+    display: "flex",
+    justifyContent: "space-between",
+  },
   layout: {
     width: "auto",
     marginLeft: theme.spacing(1),
@@ -216,7 +221,18 @@ const BoardPage = () => {
   const [deleteSuccessSB, setDeleteSuccessSB] = React.useState(false);
   const [value, setValue] = React.useState("1");
   const [tournaments, setTournaments] = React.useState([]);
-  const [tournamentDetail, setTournamentDetail] = React.useState([]);
+  const [tournamentDetail, setTournamentDetail] = React.useState({});
+  const [tournamentDetailModal, setTournamentDetailModal] = React.useState(
+    false
+  );
+  const [tournamentEnrollModal, setTournamentEnrollModal] = React.useState(
+    false
+  );
+
+  const detailModalClose = () => {
+    setTournamentDetailModal(false);
+    setTournamentDetail({});
+  };
 
   const showMore = async () => {
     const lastContent = boardContent[boardContent.length - 1].writeDate;
@@ -395,48 +411,56 @@ const BoardPage = () => {
     modalCloseAndUpdate();
   };
 
+  const enrollTournament = (info) => {
+    setTournamentEnrollModal(true);
+
+    console.log(info);
+  };
+
   const showTournament = (tournament) => {
+    setTournamentDetailModal(true);
+
     app
       .firestore()
       .collection("tournament")
       .doc(tournament.title)
       .get()
       .then((snapshot) => {
-        snapshot.forEach((doc) => {
-          setTournamentDetail((oldArray) => [
-            ...oldArray,
-            {
-              camp: doc.data().camp,
-              facility: doc.data().facility,
-              enrollNumber: doc.data().enrollNumber,
-              prize: doc.data().prize,
-              recruitEndDate: doc.data().recruitEndDate,
-              sport: doc.data().sport,
-              startTournamentDate: doc.data().startTournamentDate,
-              uid: doc.data().uid,
-            },
-          ]);
+        setTournamentDetail({
+          title: tournament.title,
+          camp: snapshot.data().camp,
+          facility: snapshot.data().facility,
+          enrollNumber: snapshot.data().enrollNumber,
+          prize: snapshot.data().prize,
+          recruitEndDate: snapshot.data().recruitEndDate.seconds * 1000,
+          sport: snapshot.data().sport,
+          startTournamentDate:
+            snapshot.data().startTournamentDate.seconds * 1000,
+          uid: snapshot.data().uid,
         });
       });
   };
 
   React.useEffect(() => {
-    app
-      .firestore()
-      .collection("tournament")
-      .get()
-      .then((snapshot) => {
-        snapshot.forEach((doc) => {
-          setTournaments((oldArray) => [
-            ...oldArray,
-            {
-              title: doc.id,
-              camp: doc.data().camp,
-              enrollNumber: doc.data().enrollNumber,
-            },
-          ]);
-        });
-      });
+    app.auth().onAuthStateChanged(async (user) => {
+      if (user) {
+        setShowAddButton(true);
+        await app
+          .firestore()
+          .collection("users")
+          .where("uid", "==", user.uid)
+          .get()
+          .then((snapshot) => {
+            snapshot.forEach((doc) => {
+              if (doc.data().admin) setIsUserAdmin(true);
+              setUserId(user.uid);
+              setUserData(
+                `${doc.data().military} ${doc.data().rank} ${doc.data().name}`
+              );
+            });
+          });
+      }
+    });
 
     app
       .firestore()
@@ -494,25 +518,23 @@ const BoardPage = () => {
         });
       });
 
-    app.auth().onAuthStateChanged(async (user) => {
-      if (user) {
-        setShowAddButton(true);
-        await app
-          .firestore()
-          .collection("users")
-          .where("uid", "==", user.uid)
-          .get()
-          .then((snapshot) => {
-            snapshot.forEach((doc) => {
-              if (doc.data().admin) setIsUserAdmin(true);
-              setUserId(user.uid);
-              setUserData(
-                `${doc.data().military} ${doc.data().rank} ${doc.data().name}`
-              );
-            });
-          });
-      }
-    });
+    app
+      .firestore()
+      .collection("tournament")
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setTournaments((oldArray) => [
+            ...oldArray,
+            {
+              title: doc.id,
+              recruitEndDate: doc.data().recruitEndDate.seconds * 1000,
+              currentEnrolledTeamCount: doc.data().currentEnrolledTeamCount,
+              enrollNumber: doc.data().enrollNumber,
+            },
+          ]);
+        });
+      });
   }, []);
 
   return (
@@ -1063,12 +1085,21 @@ const BoardPage = () => {
                       <CardHeader
                         style={{ padding: "8px" }}
                         avatar={
-                          <Chip label="모집중" size="small" color="primary" />
+                          tournament.currentEnrolledTeamCount <
+                          tournament.enrollNumber ? (
+                            <Chip label="모집중" size="small" color="primary" />
+                          ) : (
+                            <Chip
+                              label="모집완료"
+                              size="small"
+                              color="secondary"
+                            />
+                          )
                         }
                       />
                       <CardContent
                         className={classes.cardContent}
-                        style={{ paddingTop: 0 }}
+                        style={{ paddingTop: 5, paddingBottom: 0 }}
                       >
                         <Typography
                           variant="h5"
@@ -1077,8 +1108,20 @@ const BoardPage = () => {
                         >
                           {tournament.title}
                         </Typography>
+                        <Typography
+                          variant="subtitle2"
+                          className={classes.typography}
+                          style={{ paddingTop: 5 }}
+                        >
+                          모집마감일:&nbsp;
+                          {moment(new Date(tournament.recruitEndDate)).format(
+                            "YYYY년 M월 D일"
+                          )}
+                        </Typography>
                       </CardContent>
-                      <CardActions className={classes.cardButton}>
+                      <CardActions
+                        style={{ display: "flex", justifyContent: "flex-end" }}
+                      >
                         <Button
                           color="primary"
                           onClick={() => showTournament(tournament)}
@@ -1091,6 +1134,166 @@ const BoardPage = () => {
                 ))
               )}
             </Grid>
+            <Modal
+              className={classes.modal}
+              open={tournamentDetailModal}
+              onClose={detailModalClose}
+              closeAfterTransition
+              BackdropComponent={Backdrop}
+              BackdropProps={{
+                timeout: 500,
+              }}
+            >
+              <Slide direction="up" in={tournamentDetailModal}>
+                <div className={classes.papers}>
+                  <Container component="main" maxWidth="md">
+                    <Typography className={classes.modalTypography}>
+                      {tournamentDetail.title}
+                    </Typography>
+                    <TableContainer
+                      component={Paper}
+                      className={classes.tableContainer}
+                    >
+                      <Table>
+                        <TableBody>
+                          <TableRow key="title">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              개최부대
+                            </TableCell>
+                            <TableCell
+                              align="left"
+                              className={classes.tableCell}
+                            >
+                              {tournamentDetail.camp}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow key="writerName">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              체육시설
+                            </TableCell>
+                            <TableCell
+                              align="left"
+                              className={classes.tableCell}
+                            >
+                              {tournamentDetail.facility}
+                            </TableCell>
+                          </TableRow>
+                          <TableRow key="content">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              포상
+                            </TableCell>
+                            <TableCell
+                              align="left"
+                              className={classes.tableCell}
+                            >
+                              {tournamentDetail.prize}
+                            </TableCell>
+                          </TableRow>
+
+                          <TableRow key="sport">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              종목
+                            </TableCell>
+                            <TableCell
+                              align="left"
+                              className={classes.tableCell}
+                            >
+                              {tournamentDetail.sport}
+                            </TableCell>
+                          </TableRow>
+
+                          <TableRow key="enrollNumber">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              참가팀 수
+                            </TableCell>
+                            <TableCell
+                              align="left"
+                              className={classes.tableCell}
+                            >
+                              {tournamentDetail.enrollNumber}
+                            </TableCell>
+                          </TableRow>
+
+                          <TableRow key="recruitEndDate">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              모집 마감일
+                            </TableCell>
+                            <TableCell
+                              align="left"
+                              className={classes.tableCell}
+                            >
+                              {moment(
+                                new Date(tournamentDetail.recruitEndDate)
+                              ).format("YYYY년 M월 D일")}
+                            </TableCell>
+                          </TableRow>
+
+                          <TableRow key="startTournamentDate">
+                            <TableCell
+                              component="th"
+                              scope="row"
+                              className={classes.tableRow}
+                            >
+                              체육대회 시작일
+                            </TableCell>
+                            <TableCell
+                              align="left"
+                              className={classes.tableCell}
+                            >
+                              {moment(
+                                new Date(tournamentDetail.startTournamentDate)
+                              ).format("YYYY년 M월 D일 ")}
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+
+                    <span className={classes.modalButton}>
+                      <Button
+                        onClick={() => enrollTournament(tournamentDetail)}
+                        variant="contained"
+                        color="primary"
+                        className={classes.button}
+                      >
+                        참가하기
+                      </Button>
+                      <Button
+                        onClick={detailModalClose}
+                        variant="contained"
+                        className={classes.button}
+                      >
+                        닫기
+                      </Button>
+                    </span>
+                  </Container>
+                </div>
+              </Slide>
+            </Modal>
           </Container>
         )}
       </main>
