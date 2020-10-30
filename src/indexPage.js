@@ -3,13 +3,13 @@ import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import Card from "@material-ui/core/Card";
-import CardActionArea from "@material-ui/core/CardActionArea";
 import app from "./firebase";
 import CardContent from "@material-ui/core/CardContent";
 import Grid from "@material-ui/core/Grid";
 import Paper from "@material-ui/core/Paper";
 import Link from "@material-ui/core/Link";
 import moment from "moment";
+import Button from "@material-ui/core/Button";
 import AnnouncementIcon from "@material-ui/icons/Announcement";
 import { NavLink } from "react-router-dom";
 
@@ -22,6 +22,21 @@ const useStyles = makeStyles((theme) => ({
     marginRight: "auto",
     marginLeft: "auto",
     width: "100%",
+  },
+  cardGrid: {
+    paddingTop: theme.spacing(8),
+    paddingBottom: theme.spacing(8),
+  },
+  card: {
+    height: "100%",
+    justifyContent: "center",
+    display: "flex",
+    flexDirection: "column",
+  },
+  cardContent: {
+    paddingTop: "22px",
+    paddingBottom: "10px",
+    textAlign: "center",
   },
   title: {
     margin: "1.75rem 0 0.875rem",
@@ -69,12 +84,6 @@ const useStyles = makeStyles((theme) => ({
       padding: theme.spacing(6),
       paddingRight: 0,
     },
-  },
-  card: {
-    display: "flex",
-  },
-  cardDetails: {
-    flex: 1,
   },
   cardMedia: {
     width: 160,
@@ -173,78 +182,67 @@ const IndexPage = () => {
 
           <Grid container spacing={4}>
             <Grid item xs={12} md={6}>
-              <CardActionArea component={NavLink} to="/myPage">
-                <Card className={classes.card}>
-                  <div className={classes.cardDetails}>
-                    <CardContent>
-                      <Typography component="h2" variant="h5">
-                        오늘의 내 예약 보기
-                      </Typography>
+              <Card className={classes.card}>
+                <CardContent>
+                  <Typography component="h2" variant="h5">
+                    오늘의 내 예약 보기
+                  </Typography>
 
-                      {isLogined ? (
-                        futureReservation.length === 0 ? (
-                          <Typography
-                            variant="h4"
-                            className={classes.typography}
-                          >
-                            <AnnouncementIcon style={{ marginRight: "5px" }} />
-                            내 예약이 없습니다.
-                          </Typography>
-                        ) : (
-                          futureReservation.map((reservation) => (
-                            <Typography
-                              variant="subtitle1"
-                              key={reservation.key}
-                              className={classes.typography}
-                            >
-                              {reservation.camp} {reservation.facility}에서{" "}
-                              {moment(reservation.start.toDate()).format(
-                                "YYYY/MM/DD hh:mm"
-                              )}
-                              &nbsp;~&nbsp;
-                              {moment(reservation.end.toDate()).format("hh:mm")}
-                              의{reservation.title} 예약이 존재합니다.
-                            </Typography>
-                          ))
-                        )
-                      ) : (
+                  {isLogined ? (
+                    futureReservation.length === 0 ? (
+                      <Typography variant="h4" className={classes.typography}>
+                        <AnnouncementIcon style={{ marginRight: "5px" }} />내
+                        예약이 없습니다.
+                      </Typography>
+                    ) : (
+                      futureReservation.map((reservation) => (
                         <Typography
                           variant="subtitle1"
+                          key={reservation.key}
                           className={classes.typography}
                         >
-                          내 예약을 보시려면 먼저 로그인을 부탁드립니다.
+                          {reservation.camp} {reservation.facility}에서{" "}
+                          {moment(reservation.start.toDate()).format(
+                            "YYYY/MM/DD hh:mm"
+                          )}
+                          &nbsp;~&nbsp;
+                          {moment(reservation.end.toDate()).format("hh:mm")}의
+                          {reservation.title} 예약이 존재합니다.
                         </Typography>
-                      )}
-                      <Typography variant="subtitle1" color="primary">
-                        이어서 보기...
-                      </Typography>
-                    </CardContent>
-                  </div>
-                </Card>
-              </CardActionArea>
+                      ))
+                    )
+                  ) : (
+                    <Typography
+                      variant="subtitle1"
+                      className={classes.typography}
+                    >
+                      내 예약을 보시려면 먼저 로그인을 부탁드립니다.
+                    </Typography>
+                  )}
+                  <Button color="primary" component={NavLink} to="/myPage">
+                    이어서 보기...
+                  </Button>
+                </CardContent>
+              </Card>
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <CardActionArea component="a" href="#">
-                <Card className={classes.card}>
-                  <div className={classes.cardDetails}>
-                    <CardContent>
-                      <Typography component="h2" variant="h5">
-                        지금 개최중인 체육대회 확인하기
-                      </Typography>
-                      <Typography variant="subtitle1" color="textSecondary">
-                        {post.date}
-                      </Typography>
-                      <Typography variant="subtitle1" paragraph>
-                        {post.description}
-                      </Typography>
-                      <Typography variant="subtitle1" color="primary">
-                        이어서 보기...
-                      </Typography>
-                    </CardContent>
-                  </div>
-                </Card>
-              </CardActionArea>
+              <Card className={classes.card}>
+                <CardContent>
+                  <Typography component="h2" variant="h5">
+                    지금 개최중인 체육대회 확인하기
+                  </Typography>
+                  <Typography variant="subtitle1" color="textSecondary">
+                    {post.date}
+                  </Typography>
+                  <Typography variant="subtitle1" paragraph>
+                    {post.description}
+                  </Typography>
+                  <Typography variant="subtitle1" color="primary">
+                    이어서 보기...
+                  </Typography>
+                </CardContent>
+              </Card>
             </Grid>
           </Grid>
 

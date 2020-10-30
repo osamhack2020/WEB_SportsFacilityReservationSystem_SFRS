@@ -6,8 +6,14 @@ import CardContent from "@material-ui/core/CardContent";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
+import GroupIcon from "@material-ui/icons/Group";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
+import Tooltip from "@material-ui/core/Tooltip";
+import HelpIcon from "@material-ui/icons/Help";
+import IconButton from "@material-ui/core/IconButton";
+import TextField from "@material-ui/core/TextField";
+import moment from "moment";
 import AddIcon from "@material-ui/icons/Add";
 import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import app from "./firebase";
@@ -165,6 +171,9 @@ const useStyles = makeStyles((theme) => ({
   tableContainer: {
     maxHeight: 400,
   },
+  tableContainer2: {
+    maxHeight: 550,
+  },
 }));
 
 const AddCamp = () => {
@@ -187,6 +196,7 @@ const AddCamp = () => {
   ]);
   const [snackBar, setSnackBar] = React.useState(false);
   const [pendingCamps, setPendingCamps] = React.useState([]);
+
   const handleAddFields = () => {
     setInputFields((oldArray) => [...oldArray, { facility: "", location: "" }]);
     setFacilityError((oldArray) => [
@@ -213,8 +223,95 @@ const AddCamp = () => {
     tournamentEnrollNumberError,
     setTournamentEnrollNumberError,
   ] = React.useState(false);
-  const [tournamentEnrollNumber, setTournamentEnrollNumber] = React.useState(0);
+  const [tournamentEnrollNumber, setTournamentEnrollNumber] = React.useState(
+    ""
+  );
   const [tournamentSnackbar, setTournamentSnackbar] = React.useState(false);
+  const [
+    tournamentFacilitySelection,
+    setTournamentFacilitySelection,
+  ] = React.useState([]);
+  const [tournamentFacilityError, setTournamentFacilityError] = React.useState(
+    false
+  );
+  const [tournamentFacility, setTournamentFacility] = React.useState("");
+  const [tournamentPrize, setTournamentPrize] = React.useState("");
+  const [tournamentPrizeError, setTournamentPrizeError] = React.useState(false);
+  const [recruitDate, setRecruitDate] = React.useState(
+    moment().format("YYYY-MM-DD")
+  );
+  const [startTournamentDate, setStartTournamentDate] = React.useState(
+    moment().format("YYYY-MM-DD")
+  );
+  const [tournamentSport, setTournamentSport] = React.useState("");
+  const [tournamentSportError, setTournamentSportError] = React.useState(false);
+  const [tournamentOpendByMe, setTournamentOpendByMe] = React.useState([]);
+
+  const addTournament = async () => {
+    setOpenProgress(true);
+
+    setTournamentSportError(false);
+    setTournamentEnrollNumberError(false);
+    setTournamentFacilityError(false);
+    setTournamentNameError(false);
+    setTournamentPrizeError(false);
+
+    setTimeout(() => {
+      setOpenProgress(false);
+    }, 400);
+
+    if (tournamentName === "") {
+      setTournamentNameError(true);
+      return;
+    } else if (tournamentFacility === "") {
+      setTournamentFacilityError(true);
+      return;
+    } else if (tournamentSport === "") {
+      setTournamentSportError(true);
+      return;
+    } else if (tournamentEnrollNumber === "") {
+      setTournamentEnrollNumberError(true);
+      return;
+    } else if (tournamentPrize === "") {
+      setTournamentPrizeError(true);
+      return;
+    }
+
+    await app
+      .firestore()
+      .collection("tournament")
+      .doc(tournamentName)
+      .set({
+        camp: tournamentCamp,
+        facility: tournamentFacility,
+        enrollNumber: tournamentEnrollNumber,
+        prize: tournamentPrize,
+        recruitEndDate: moment(recruitDate, "YYYY-MM-DD").toDate(),
+        startTournamentDate: moment(startTournamentDate, "YYYY-MM-DD").toDate(),
+        sport: tournamentSport,
+        uid: authUserId,
+      });
+
+    setTournamentSnackbar(true);
+    setTimeout(() => {
+      eraseTournament();
+    }, 1500);
+  };
+
+  const eraseTournament = () => {
+    setTournamentModal(false);
+    setTournamentEnrollNumberError(false);
+    setTournamentFacilityError(false);
+    setTournamentNameError(false);
+    setTournamentPrizeError(false);
+    setTournamentCamp("");
+    setTournamentFacility("");
+    setTournamentPrize("");
+    setTournamentEnrollNumber("");
+    setTournamentName("");
+    setStartTournamentDate(moment().format("YYYY-MM-DD"));
+    setRecruitDate(moment().format("YYYY-MM-DD"));
+  };
 
   const addCamp = async () => {
     setOpenProgress(true);
@@ -314,8 +411,19 @@ const AddCamp = () => {
           .where("uid", "==", user.uid)
           .get()
           .then((snapshot) => {
-            snapshot.forEach(async (doc) => {
+            snapshot.forEach((doc) => {
               setPendingCamps((oldArray) => [...oldArray, doc.id]);
+            });
+          });
+
+        await app
+          .firestore()
+          .collection("tournament")
+          .where("uid", "==", user.uid)
+          .get()
+          .then((snapshot) => {
+            snapshot.forEach((doc) => {
+              setTournamentOpendByMe((oldArray) => [...oldArray, doc.id]);
             });
           });
       }
@@ -391,51 +499,23 @@ const AddCamp = () => {
   };
 
   const createTournament = (camp) => {
+    app
+      .firestore()
+      .collection("camp")
+      .doc(camp)
+      .collection("facility")
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setTournamentFacilitySelection((oldArray) => [
+            ...oldArray,
+            { name: doc.id },
+          ]);
+        });
+      });
+
     setTournamentCamp(camp);
     setTournamentModal(true);
-  };
-
-  const tournamentClose = () => {
-    setTournamentEnrollNumber(0);
-    setTournamentCamp("");
-    setTournamentName("");
-    setTournamentModal(false);
-  };
-
-  const addTournament = async () => {
-    setOpenProgress(true);
-    setTournamentNameError(false);
-
-    if (tournamentName === "") {
-      setTournamentNameError(true);
-      return;
-    } else if (tournamentEnrollNumber === 0) {
-      setTournamentEnrollNumberError(true);
-      return;
-    }
-
-    await app
-      .firestore()
-      .collection("tournament")
-      .doc(tournamentName)
-      .set({ camp: tournamentCamp, enrollNumber: tournamentEnrollNumber });
-
-    setTimeout(() => {
-      setOpenProgress(false);
-    }, 400);
-    setTournamentSnackbar(true);
-    setTimeout(() => {
-      eraseTournament();
-    }, 1500);
-  };
-
-  const eraseTournament = () => {
-    setTournamentModal(false);
-    setTournamentEnrollNumberError(false);
-    setTournamentNameError(false);
-    setTournamentCamp("");
-    setTournamentEnrollNumber(0);
-    setTournamentName("");
   };
 
   return (
@@ -505,6 +585,15 @@ const AddCamp = () => {
                       value="2"
                       icon={<HourglassEmptyIcon />}
                     />
+                    <BottomNavigationAction
+                      classes={{
+                        label: classes.navigationStyle,
+                        selected: classes.navigationSelected,
+                      }}
+                      label="내가 개최한 체육대회"
+                      value="3"
+                      icon={<GroupIcon />}
+                    />
                   </BottomNavigation>
                 </Grid>
               </div>
@@ -543,11 +632,12 @@ const AddCamp = () => {
                   </Grid>
                 ))}
 
+                {/* 이거는 대회 개최하는 모달 */}
                 <Modal
                   id="tournament"
                   className={classes.modal}
                   open={tournamentModal}
-                  onClose={tournamentClose}
+                  onClose={eraseTournament}
                   closeAfterTransition
                   BackdropComponent={Backdrop}
                   BackdropProps={{
@@ -562,11 +652,11 @@ const AddCamp = () => {
                         </Typography>
                         <TableContainer
                           component={Paper}
-                          className={classes.tableContainer}
+                          className={classes.tableContainer2}
                         >
                           <Table>
                             <TableBody>
-                              <TableRow key="campName">
+                              <TableRow key="campName1">
                                 <TableCell
                                   component="th"
                                   scope="row"
@@ -574,7 +664,7 @@ const AddCamp = () => {
                                 >
                                   체육대회명
                                 </TableCell>
-                                <th>
+                                <TableCell style={{ padding: 0 }}>
                                   <FormControl
                                     fullWidth
                                     error={tournamentNameError}
@@ -589,9 +679,9 @@ const AddCamp = () => {
                                       placeholder="체육대회명을 입력해주십시오."
                                     />
                                   </FormControl>
-                                </th>
+                                </TableCell>
                               </TableRow>
-                              <TableRow>
+                              <TableRow key="camp">
                                 <TableCell
                                   component="th"
                                   scope="row"
@@ -607,7 +697,118 @@ const AddCamp = () => {
                                 </TableCell>
                               </TableRow>
 
-                              <TableRow key="campName">
+                              <TableRow key="campName9">
+                                <TableCell
+                                  component="th"
+                                  scope="row"
+                                  className={classes.tableRow}
+                                >
+                                  체육시설 선택
+                                </TableCell>
+                                <TableCell style={{ padding: 0 }}>
+                                  <FormControl
+                                    required
+                                    variant="outlined"
+                                    className={classes.formControl}
+                                    fullWidth
+                                    error={tournamentFacilityError}
+                                  >
+                                    <InputLabel>체육시설 선택</InputLabel>
+                                    <Select
+                                      value={tournamentFacility}
+                                      onChange={({ target: { value } }) =>
+                                        setTournamentFacility(value)
+                                      }
+                                      label="체육시설 선택"
+                                    >
+                                      {tournamentFacilitySelection.map(
+                                        (facility, index) => (
+                                          <MenuItem
+                                            value={facility.name}
+                                            key={index}
+                                          >
+                                            {facility.name}
+                                          </MenuItem>
+                                        )
+                                      )}
+                                    </Select>
+                                  </FormControl>
+                                </TableCell>
+                              </TableRow>
+
+                              <TableRow key="tournamentName">
+                                <TableCell
+                                  component="th"
+                                  scope="row"
+                                  className={classes.tableRow}
+                                >
+                                  체육대회 종목
+                                </TableCell>
+                                <TableCell style={{ padding: 0 }}>
+                                  <FormControl
+                                    fullWidth
+                                    error={tournamentSportError}
+                                  >
+                                    <Input
+                                      value={tournamentSport}
+                                      onChange={({ target: { value } }) =>
+                                        setTournamentSport(value)
+                                      }
+                                      type="text"
+                                      className={classes.textField}
+                                      placeholder="체육대회 종목을 입력해주십시오."
+                                    />
+                                  </FormControl>
+                                </TableCell>
+                              </TableRow>
+
+                              <TableRow key="recruitEndDate">
+                                <TableCell
+                                  component="th"
+                                  scope="row"
+                                  className={classes.tableRow}
+                                >
+                                  모집 종료일
+                                </TableCell>
+                                <TableCell style={{ padding: 0 }}>
+                                  <TextField
+                                    type="date"
+                                    value={recruitDate}
+                                    onChange={(event) =>
+                                      setRecruitDate(event.target.value)
+                                    }
+                                    className={classes.textField}
+                                    InputLabelProps={{
+                                      shrink: true,
+                                    }}
+                                  />
+                                </TableCell>
+                              </TableRow>
+
+                              <TableRow key="startOfTournament">
+                                <TableCell
+                                  component="th"
+                                  scope="row"
+                                  className={classes.tableRow}
+                                >
+                                  대회 시작일
+                                </TableCell>
+                                <TableCell style={{ padding: 0 }}>
+                                  <TextField
+                                    type="date"
+                                    value={startTournamentDate}
+                                    onChange={(event) =>
+                                      setStartTournamentDate(event.target.value)
+                                    }
+                                    className={classes.textField}
+                                    InputLabelProps={{
+                                      shrink: true,
+                                    }}
+                                  />
+                                </TableCell>
+                              </TableRow>
+
+                              <TableRow key="campName2">
                                 <TableCell
                                   component="th"
                                   scope="row"
@@ -615,51 +816,100 @@ const AddCamp = () => {
                                 >
                                   체육대회 참가팀 수
                                 </TableCell>
-                                <FormControl
-                                  required
-                                  variant="outlined"
-                                  className={classes.formControl}
-                                  fullWidth
-                                  error={tournamentEnrollNumberError}
-                                >
-                                  <InputLabel id="demo-simple-select-outlined-label">
-                                    참가팀 수 선택
-                                  </InputLabel>
-                                  <Select
-                                    value={tournamentEnrollNumber}
-                                    onChange={({ target: { value } }) =>
-                                      setTournamentEnrollNumber(value)
-                                    }
-                                    label="참가팀 수 선택"
+                                <TableCell style={{ padding: 0 }}>
+                                  <FormControl
+                                    required
+                                    variant="outlined"
+                                    className={classes.formControl}
+                                    fullWidth
+                                    error={tournamentEnrollNumberError}
                                   >
-                                    <MenuItem value="8">8</MenuItem>
-                                    <MenuItem value="16">16</MenuItem>
-                                    <MenuItem value="32">32</MenuItem>
-                                    <MenuItem value="64">64</MenuItem>
-                                  </Select>
-                                </FormControl>
+                                    <InputLabel>참가팀 수 선택</InputLabel>
+                                    <Select
+                                      value={tournamentEnrollNumber}
+                                      onChange={({ target: { value } }) =>
+                                        setTournamentEnrollNumber(value)
+                                      }
+                                      label="참가팀 수 선택"
+                                    >
+                                      <MenuItem value={8}>8</MenuItem>
+                                      <MenuItem value={16}>16</MenuItem>
+                                      <MenuItem value={32}>32</MenuItem>
+                                      <MenuItem value={64}>64</MenuItem>
+                                    </Select>
+                                  </FormControl>
+                                </TableCell>
+                              </TableRow>
+
+                              <TableRow key="campName8">
+                                <TableCell
+                                  component="th"
+                                  scope="row"
+                                  className={classes.tableRow}
+                                >
+                                  체육대회 포상
+                                </TableCell>
+                                <TableCell style={{ padding: 0 }}>
+                                  <FormControl
+                                    fullWidth
+                                    error={tournamentPrizeError}
+                                  >
+                                    <Input
+                                      value={tournamentPrize}
+                                      onChange={({ target: { value } }) =>
+                                        setTournamentPrize(value)
+                                      }
+                                      type="text"
+                                      className={classes.textField}
+                                      placeholder="체육대회 포상을 입력해주십시오."
+                                    />
+                                  </FormControl>
+                                </TableCell>
                               </TableRow>
                             </TableBody>
                           </Table>
                         </TableContainer>
 
                         <span className={classes.buttons}>
-                          <Button
-                            onClick={tournamentClose}
-                            variant="contained"
-                            color="secondary"
-                            className={classes.button}
+                          <Tooltip
+                            disableFocusListener
+                            title={
+                              <React.Fragment>
+                                <Typography color="inherit">
+                                  체육대회는 등록되는 순간부터 모집이 시작되고
+                                  등록하신 체육대회는 게시판에서 확인하실 수
+                                  있습니다.
+                                </Typography>
+                              </React.Fragment>
+                            }
                           >
-                            닫기
-                          </Button>
-                          <Button
-                            onClick={addTournament}
-                            variant="contained"
-                            color="primary"
-                            className={classes.button}
+                            <IconButton>
+                              <HelpIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <span
+                            style={{
+                              display: "flex",
+                              justifyContent: "flex-end",
+                            }}
                           >
-                            확인
-                          </Button>
+                            <Button
+                              onClick={addTournament}
+                              variant="contained"
+                              color="primary"
+                              className={classes.button}
+                            >
+                              확인
+                            </Button>
+                            <Button
+                              onClick={eraseTournament}
+                              variant="contained"
+                              color="secondary"
+                              className={classes.button}
+                            >
+                              닫기
+                            </Button>
+                          </span>
                           <Snackbar
                             autoHideDuration={2000}
                             open={tournamentSnackbar}
@@ -702,7 +952,7 @@ const AddCamp = () => {
                         >
                           <Table>
                             <TableBody>
-                              <TableRow key="campName">
+                              <TableRow key="campName3">
                                 <TableCell
                                   component="th"
                                   scope="row"
@@ -800,7 +1050,7 @@ const AddCamp = () => {
                               >
                                 <Table>
                                   <TableBody>
-                                    <TableRow key="campName">
+                                    <TableRow key="campName4">
                                       <TableCell
                                         component="th"
                                         scope="row"
@@ -958,7 +1208,7 @@ const AddCamp = () => {
                 </Grid>
               </Grid>
             </Container>
-          ) : (
+          ) : value === "2" ? (
             <Container className={classes.cardGrid} maxWidth="md">
               <Grid container spacing={4}>
                 {pendingCamps.length === 0 ? (
@@ -1021,7 +1271,7 @@ const AddCamp = () => {
                         >
                           <Table>
                             <TableBody>
-                              <TableRow key="campName">
+                              <TableRow key="campName5">
                                 <TableCell
                                   component="th"
                                   scope="row"
@@ -1182,7 +1432,7 @@ const AddCamp = () => {
                         >
                           <Table>
                             <TableBody>
-                              <TableRow key="campName">
+                              <TableRow key="campName6">
                                 <TableCell
                                   component="th"
                                   scope="row"
@@ -1246,6 +1496,41 @@ const AddCamp = () => {
                     </div>
                   </Slide>
                 </Modal>
+              </Grid>
+            </Container>
+          ) : (
+            <Container className={classes.cardGrid} maxWidth="md">
+              <Grid container spacing={4}>
+                {tournamentOpendByMe.length === 0 ? (
+                  <Typography align="justify" className={classes.noPending}>
+                    내가 추가한 체육대회가 없습니다.
+                  </Typography>
+                ) : (
+                  tournamentOpendByMe.map((tournament) => (
+                    <Grid item key={tournament} xs={12} sm={6} md={4}>
+                      <Card className={classes.card}>
+                        <CardContent className={classes.cardContent}>
+                          <Typography
+                            variant="h5"
+                            component="h2"
+                            className={classes.typography}
+                          >
+                            {tournament}
+                          </Typography>
+                        </CardContent>
+                        <CardActions className={classes.cardButton}>
+                          <Button
+                            value={tournament}
+                            color="primary"
+                            onClick={() => showPendingFacility(tournament)}
+                          >
+                            자세히asd
+                          </Button>
+                        </CardActions>
+                      </Card>
+                    </Grid>
+                  ))
+                )}
               </Grid>
             </Container>
           )}

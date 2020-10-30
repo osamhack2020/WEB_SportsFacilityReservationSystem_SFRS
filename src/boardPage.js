@@ -1,4 +1,5 @@
 import React from "react";
+import CardActions from "@material-ui/core/CardActions";
 import Table from "@material-ui/core/Table";
 import TableHead from "@material-ui/core/TableHead";
 import TableBody from "@material-ui/core/TableBody";
@@ -6,12 +7,13 @@ import TableRow from "@material-ui/core/TableRow";
 import Typography from "@material-ui/core/Typography";
 import Card from "@material-ui/core/Card";
 import TableCell from "@material-ui/core/TableCell";
-import CardActions from "@material-ui/core/CardActions";
 import CardContent from "@material-ui/core/CardContent";
 import { makeStyles } from "@material-ui/core/styles";
 import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import Container from "@material-ui/core/Container";
 import CssBaseline from "@material-ui/core/CssBaseline";
+import Chip from "@material-ui/core/Chip";
+import CardHeader from "@material-ui/core/CardHeader";
 import Paper from "@material-ui/core/Paper";
 import Modal from "@material-ui/core/Modal";
 import Backdrop from "@material-ui/core/Backdrop";
@@ -40,6 +42,21 @@ const useStyles = makeStyles((theme) => ({
     padding: "4px 2%",
     justifyContent: "flex-end",
     display: "flex",
+  },
+  cardGrid: {
+    paddingTop: theme.spacing(8),
+    paddingBottom: theme.spacing(8),
+  },
+  card: {
+    height: "100%",
+    justifyContent: "center",
+    display: "flex",
+    flexDirection: "column",
+  },
+  cardContent: {
+    paddingTop: "22px",
+    paddingBottom: "10px",
+    textAlign: "center",
   },
   root: {
     backgroundColor: "#fafafa",
@@ -199,6 +216,7 @@ const BoardPage = () => {
   const [deleteSuccessSB, setDeleteSuccessSB] = React.useState(false);
   const [value, setValue] = React.useState("1");
   const [tournaments, setTournaments] = React.useState([]);
+  const [tournamentDetail, setTournamentDetail] = React.useState([]);
 
   const showMore = async () => {
     const lastContent = boardContent[boardContent.length - 1].writeDate;
@@ -375,6 +393,31 @@ const BoardPage = () => {
 
     setDeleteSuccessSB(true);
     modalCloseAndUpdate();
+  };
+
+  const showTournament = (tournament) => {
+    app
+      .firestore()
+      .collection("tournament")
+      .doc(tournament.title)
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setTournamentDetail((oldArray) => [
+            ...oldArray,
+            {
+              camp: doc.data().camp,
+              facility: doc.data().facility,
+              enrollNumber: doc.data().enrollNumber,
+              prize: doc.data().prize,
+              recruitEndDate: doc.data().recruitEndDate,
+              sport: doc.data().sport,
+              startTournamentDate: doc.data().startTournamentDate,
+              uid: doc.data().uid,
+            },
+          ]);
+        });
+      });
   };
 
   React.useEffect(() => {
@@ -1005,35 +1048,48 @@ const BoardPage = () => {
         ) : (
           <Container className={classes.cardGrid} maxWidth="md">
             <Grid container spacing={4}>
-              {tournaments.map((tournament) => (
-                <Grid item key={tournament} xs={12} sm={6} md={4}>
-                  <Card className={classes.card}>
-                    <CardContent className={classes.cardContent}>
-                      <Typography
-                        variant="h5"
-                        component="h2"
-                        className={classes.typography}
+              {tournaments.length === 0 ? (
+                <Typography
+                  variant="h5"
+                  component="h2"
+                  className={classes.typography}
+                >
+                  개최된 체육대회가 존재하지 않습니다.
+                </Typography>
+              ) : (
+                tournaments.map((tournament) => (
+                  <Grid item key={tournament} xs={12} sm={6} md={4}>
+                    <Card className={classes.card}>
+                      <CardHeader
+                        style={{ padding: "8px" }}
+                        avatar={
+                          <Chip label="모집중" size="small" color="primary" />
+                        }
+                      />
+                      <CardContent
+                        className={classes.cardContent}
+                        style={{ paddingTop: 0 }}
                       >
-                        {tournament.title}
-                      </Typography>
-                    </CardContent>
-                    {/* <CardActions className={classes.cardButton}>
-                      <Button
-                        color="primary"
-                        onClick={() => showFacility(tournament)}
-                      >
-                        자세히
-                      </Button>
-                      <Button
-                        color="primary"
-                        onClick={() => createTournament(tournament)}
-                      >
-                        체육대회 개최
-                      </Button>
-                    </CardActions> */}
-                  </Card>
-                </Grid>
-              ))}
+                        <Typography
+                          variant="h5"
+                          component="h2"
+                          className={classes.typography}
+                        >
+                          {tournament.title}
+                        </Typography>
+                      </CardContent>
+                      <CardActions className={classes.cardButton}>
+                        <Button
+                          color="primary"
+                          onClick={() => showTournament(tournament)}
+                        >
+                          자세히
+                        </Button>
+                      </CardActions>
+                    </Card>
+                  </Grid>
+                ))
+              )}
             </Grid>
           </Container>
         )}
