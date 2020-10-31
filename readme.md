@@ -1,6 +1,3 @@
-
-
-
 # <img src="https://user-images.githubusercontent.com/68759940/97770133-1b1d6680-1b74-11eb-927f-39b23ce15d5a.JPG" width="50%"></img>
 국군장병들의 원활한 체육시설 이용을 위한 체육시설예약체계
 
@@ -57,11 +54,12 @@ $ yarn
 ```
 - db로 사용한 firebase 접근을 위해 .env 파일을 설정해줘야 합니다. 
 - (만약 env 파일이 필요하시다면  youngan.jung@gmail.com 으로 연락 부탁드립니다.)
+- 제 프로젝트에서 루트 권한 설정이 필요하시다면 youngan.jung@gmail.com 으로 연락 부탁드립니다.
 
 ```bash
 $ yarn start 
 ```
- 
+- .env 파일을 설정했다면 위 명령어 입력하시면 완료입니다!
 ## 팀 정보 (Team Information)
 - 정영안 (duddks1115@gmail.com), Github Id: younganJung1115
 
