@@ -315,6 +315,7 @@ const AddCamp = () => {
     setTournamentFacilityError(false);
     setTournamentNameError(false);
     setTournamentPrizeError(false);
+    setTournamentSport("");
     setTournamentCamp("");
     setTournamentFacility("");
     setTournamentPrize("");
