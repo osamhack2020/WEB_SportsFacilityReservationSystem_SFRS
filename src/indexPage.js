@@ -7,6 +7,7 @@ import app from "./firebase";
 import CardContent from "@material-ui/core/CardContent";
 import Grid from "@material-ui/core/Grid";
 import Paper from "@material-ui/core/Paper";
+import NotificationsIcon from "@material-ui/icons/Notifications";
 import Link from "@material-ui/core/Link";
 import moment from "moment";
 import Button from "@material-ui/core/Button";
@@ -96,7 +97,7 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(3),
   },
   typography: {
-    padding: "5px",
+    paddingLeft: "10px",
   },
 }));
 
@@ -112,12 +113,15 @@ const IndexPage = () => {
   const classes = useStyles();
   const [futureReservation, setFutureReservation] = React.useState([]);
   const [isLogined, setIsLogined] = React.useState(false);
+  const [tournaments, setTournaments] = React.useState([]);
+  const [adminBoardContent, setAdminBoardContent] = React.useState([]);
+  const [usreInfo, setUserInfo] = React.useState([]);
 
   React.useEffect(() => {
-    app.auth().onAuthStateChanged(async (user) => {
+    app.auth().onAuthStateChanged((user) => {
       if (user) {
         setIsLogined(true);
-        await app
+        app
           .firestore()
           .collectionGroup("reservation")
           .where("uid", "==", user.uid)
@@ -143,8 +147,61 @@ const IndexPage = () => {
               }
             });
           });
+
+        app
+          .firestore()
+          .collection("users")
+          .where("uid", "==", user.uid)
+          .get()
+          .then((snapshot) => {
+            snapshot.forEach((doc) => {
+              setUserInfo(doc.data());
+            });
+          });
       } else setIsLogined(false);
     });
+
+    app
+      .firestore()
+      .collectionGroup("tournament")
+      .limit(5)
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setTournaments((oldArray) => [
+            ...oldArray,
+            {
+              tournamentName: doc.id,
+              sport: doc.data().sport,
+              recruitEndDate: doc.data().recruitEndDate,
+              camp: doc.data().camp,
+              facility: doc.data().facility,
+              prize: doc.data().prize,
+            },
+          ]);
+        });
+      });
+
+    app
+      .firestore()
+      .collection("board")
+      .where("adminWrite", "==", true)
+      .orderBy("writeDate", "desc")
+      .limit(10)
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setAdminBoardContent((oldArray) => [
+            ...oldArray,
+            {
+              title: doc.data().title,
+              writer: doc.data().writer,
+              writeDate: doc.data().writeDate,
+              key: doc.id,
+            },
+          ]);
+        });
+      });
   }, []);
 
   return (
@@ -180,14 +237,13 @@ const IndexPage = () => {
             </Grid>
           </Paper>
 
-          <Grid container spacing={4}>
+          <Grid container spacing={4} style={{ marginBottom: "10px" }}>
             <Grid item xs={12} md={6}>
               <Card className={classes.card}>
                 <CardContent>
                   <Typography component="h2" variant="h5">
-                    오늘의 내 예약 보기
+                    내 체육시설 예약 보기
                   </Typography>
-
                   {isLogined ? (
                     futureReservation.length === 0 ? (
                       <Typography variant="h4" className={classes.typography}>
@@ -232,48 +288,127 @@ const IndexPage = () => {
                   <Typography component="h2" variant="h5">
                     지금 개최중인 체육대회 확인하기
                   </Typography>
-                  <Typography variant="subtitle1" color="textSecondary">
-                    {post.date}
-                  </Typography>
-                  <Typography variant="subtitle1" paragraph>
-                    {post.description}
-                  </Typography>
-                  <Typography variant="subtitle1" color="primary">
+                  {tournaments.length === 0 ? (
+                    <Typography variant="h4" className={classes.typography}>
+                      <AnnouncementIcon style={{ marginRight: "5px" }} />내
+                      개최중인 체육대회가 존재하지 않습니다.
+                    </Typography>
+                  ) : (
+                    tournaments.map((tournament) => (
+                      <Typography
+                        variant="subtitle1"
+                        key={tournament.tournamentName + 1}
+                        className={classes.typography}
+                      >
+                        {tournament.tournamentName} &nbsp;{tournament.camp}의{" "}
+                        {tournament.facility}에서 {tournament.sport} 종목으로{" "}
+                        {tournament.prize}를 얻자
+                      </Typography>
+                    ))
+                  )}
+                  <Button color="primary" component={NavLink} to="/boardPage">
                     이어서 보기...
-                  </Typography>
+                  </Button>
                 </CardContent>
               </Card>
             </Grid>
-          </Grid>
 
-          <Grid item xs={12} md={4}>
-            <Paper elevation={0} className={classes.sidebarAboutBox}>
-              <Typography variant="h6" gutterBottom>
-                asd
-              </Typography>
-              <Typography>asd</Typography>
-            </Paper>
-            <Typography
-              variant="h6"
-              gutterBottom
-              className={classes.sidebarSection}
-            >
-              Archives
-            </Typography>
-            2010 123912390123 1232 342 342 3423 4
-            <Typography
-              variant="h6"
-              gutterBottom
-              className={classes.sidebarSection}
-            >
-              Social
-            </Typography>
-            <Link display="block" variant="body1" href="#">
-              <Grid container direction="row" spacing={1} alignItems="center">
-                <Grid item>asdasdsac</Grid>
-                <Grid item>aasdaskjn</Grid>
-              </Grid>
-            </Link>
+            <Grid item xs={12} md={6}>
+              <Card className={classes.card}>
+                <CardContent>
+                  <Typography component="h2" variant="h5">
+                    내 정보
+                  </Typography>
+                  {isLogined ? (
+                    <div>
+                      <Typography
+                        variant="subtitle1"
+                        key="1"
+                        className={classes.typography}
+                      >
+                        군 소속 : &nbsp;&nbsp;
+                        {usreInfo.military}
+                      </Typography>
+                      <Typography
+                        key="2"
+                        variant="subtitle1"
+                        className={classes.typography}
+                      >
+                        계급 : &nbsp;&nbsp;
+                        {usreInfo.rank}
+                      </Typography>
+                      <Typography
+                        key="3"
+                        variant="subtitle1"
+                        className={classes.typography}
+                      >
+                        성함 : &nbsp;&nbsp;
+                        {usreInfo.name} &nbsp;&nbsp;
+                        {usreInfo.admin === true ? "관리자계정" : "일반사용자"}
+                      </Typography>
+                      <Typography
+                        key="4"
+                        variant="subtitle1"
+                        className={classes.typography}
+                      >
+                        군번 : &nbsp;&nbsp;
+                        {usreInfo.serialNumber}
+                      </Typography>
+                    </div>
+                  ) : (
+                    <Typography
+                      variant="subtitle1"
+                      className={classes.typography}
+                    >
+                      내 정보를 보시려면 먼저 로그인을 부탁드립니다.
+                    </Typography>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <Card className={classes.card}>
+                <CardContent>
+                  <Typography component="h2" variant="h5">
+                    관리자 공지글
+                  </Typography>
+                  {adminBoardContent.length === 0 ? (
+                    <Typography variant="h4" className={classes.typography}>
+                      <AnnouncementIcon style={{ marginRight: "5px" }} />내
+                      공지글이 존재하지 않습니다.
+                    </Typography>
+                  ) : (
+                    adminBoardContent.map((content) => (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <Typography
+                          variant="subtitle1"
+                          key={content.key}
+                          className={classes.typography}
+                        >
+                          <NotificationsIcon /> &nbsp; {content.title}
+                        </Typography>
+                        <Typography
+                          variant="subtitle1"
+                          key={content.key + 1}
+                          className={classes.typography}
+                        >
+                          {" "}
+                          {moment(content.writeDate.toDate()).format(
+                            "YYYY/MM/DD hh:mm"
+                          )}
+                        </Typography>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
         </main>
       </Container>

@@ -713,25 +713,25 @@ const BoardPage = () => {
                       label: classes.navigationStyle,
                       selected: classes.navigationSelected,
                     }}
-                    label="자유게시판"
+                    label="체육대회"
                     value="1"
-                    icon={<FormatQuoteIcon />}
+                    icon={<GroupIcon />}
                   />
                   <BottomNavigationAction
                     classes={{
                       label: classes.navigationStyle,
                       selected: classes.navigationSelected,
                     }}
-                    label="체육대회"
+                    label="자유게시판"
                     value="2"
-                    icon={<GroupIcon />}
+                    icon={<FormatQuoteIcon />}
                   />
                 </BottomNavigation>
               </Grid>
             </div>
           </Container>
         </div>
-        {value === "1" ? (
+        {value === "2" ? (
           <div>
             <div className={classes.layout}>
               <div className={classes.buttons}>
