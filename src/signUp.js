@@ -14,6 +14,8 @@ import Container from "@material-ui/core/Container";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import Backdrop from "@material-ui/core/Backdrop";
 import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import Select from "@material-ui/core/Select";
 import Checkbox from "@material-ui/core/Checkbox";
@@ -31,6 +33,10 @@ const theme = createMuiTheme({
 });
 
 const useStyles = makeStyles((theme) => ({
+  backdrop: {
+    zIndex: theme.zIndex.drawer + 1,
+    color: "#fff",
+  },
   paper: {
     marginTop: theme.spacing(8),
     display: "flex",
@@ -98,6 +104,7 @@ const SignUp = ({ history }) => {
   const [military, setMilitary] = React.useState("");
   const [rank, setRank] = React.useState("");
   const [adminState, setAdminState] = React.useState(false);
+  const [singupProgress, setSignupProgress] = useState(false);
 
   const handleChange = (event) => {
     setAdminState(event.target.checked);
@@ -127,6 +134,11 @@ const SignUp = ({ history }) => {
         serialNumber,
         passwordCheck,
       } = event.target.elements;
+
+      setSignupProgress(true);
+      setTimeout(() => {
+        setSignupProgress(false);
+      }, 500);
 
       if (military === "") setMilitaryError("군을 선택하십시오.");
       else if (rank === "") setRankError("계급을 선택하십시오.");
@@ -389,6 +401,9 @@ const SignUp = ({ history }) => {
               >
                 가입하기
               </Button>
+              <Backdrop className={classes.backdrop} open={singupProgress}>
+                <CircularProgress color="inherit" />
+              </Backdrop>
             </form>
           </div>
         </Container>

@@ -21,7 +21,7 @@ import ShowReservation from "./showReservation";
 import Checkout from "./reservation";
 import Reservation from "./reservation";
 import app from "./firebase";
-import { AuthProvider, AuthContext } from "./auth";
+import { AuthProvider } from "./auth";
 import Divider from "@material-ui/core/Divider";
 import ClickAwayListener from "@material-ui/core/ClickAwayListener";
 import MenuItem from "@material-ui/core/MenuItem";
@@ -45,6 +45,27 @@ const theme = createMuiTheme({
 const App = () => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const anchorRef = React.useRef(null);
+  const [currentUser, setCurrentUser] = React.useState(false);
+  const [userInfo, setUserInfo] = React.useState(false);
+
+  React.useEffect(() => {
+    app.auth().onAuthStateChanged((user) => {
+      if (user) {
+        setCurrentUser(true);
+
+        app
+          .firestore()
+          .collection("users")
+          .where("uid", "==", user.uid)
+          .get()
+          .then((snapshot) => {
+            snapshot.forEach((doc) => {
+              setUserInfo(doc.data());
+            });
+          });
+      }
+    });
+  }, []);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -53,6 +74,17 @@ const App = () => {
   const handleClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) return;
     setAnchorEl(null);
+  };
+
+  const signOut = () => {
+    window.location.reload(false);
+
+    app
+      .auth()
+      .signOut()
+      .then(() => {
+        setCurrentUser(false);
+      });
   };
 
   return (
@@ -82,145 +114,119 @@ const App = () => {
                 <li>
                   <NavLink to="/myPage">마이페이지</NavLink>
                 </li>
-                <AuthContext.Consumer>
-                  {({ currentUser, userInfo }) => {
-                    if (currentUser && userInfo.admin === true) {
-                      return (
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <li>
-                            {userInfo.rootAdmin === false ? (
-                              <NavLink to="/addCamp">관리자페이지</NavLink>
-                            ) : (
-                              <div>
-                                <span
-                                  ref={anchorRef}
-                                  onClick={handleClick}
-                                  style={{
-                                    fontSize: "20px",
-                                    cursor: "pointer",
-                                    display: "block",
-                                    padding: "8px 35px",
-                                  }}
-                                >
-                                  관리자페이지
-                                </span>
+                {currentUser && userInfo.admin === true ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <li>
+                      {userInfo.rootAdmin === false ? (
+                        <NavLink to="/addCamp">관리자페이지</NavLink>
+                      ) : (
+                        <div>
+                          <span
+                            ref={anchorRef}
+                            onClick={handleClick}
+                            style={{
+                              fontSize: "20px",
+                              cursor: "pointer",
+                              display: "block",
+                              padding: "8px 35px",
+                            }}
+                          >
+                            관리자페이지
+                          </span>
 
-                                <Popper
-                                  id="kimchi"
-                                  open={Boolean(anchorEl)}
-                                  anchorEl={anchorRef.current}
-                                  role={undefined}
-                                  transition
-                                  disablePortal
-                                  style={{ zIndex: 1 }}
-                                >
-                                  {({ TransitionProps, placement }) => (
-                                    <Grow
-                                      {...TransitionProps}
-                                      style={{
-                                        transformOrigin:
-                                          placement === "bottom"
-                                            ? "center top"
-                                            : "center bottom",
-                                      }}
-                                    >
-                                      <Paper>
-                                        <ClickAwayListener
-                                          onClickAway={handleClose}
+                          <Popper
+                            id="kimchi"
+                            open={Boolean(anchorEl)}
+                            anchorEl={anchorRef.current}
+                            role={undefined}
+                            transition
+                            disablePortal
+                            style={{ zIndex: 1 }}
+                          >
+                            {({ TransitionProps, placement }) => (
+                              <Grow
+                                {...TransitionProps}
+                                style={{
+                                  transformOrigin:
+                                    placement === "bottom"
+                                      ? "center top"
+                                      : "center bottom",
+                                }}
+                              >
+                                <Paper>
+                                  <ClickAwayListener onClickAway={handleClose}>
+                                    <MenuList>
+                                      <MenuItem
+                                        onClick={handleClose}
+                                        style={{
+                                          fontFamily: ["Jua", '"sans-serif"'],
+                                          padding: 0,
+                                        }}
+                                      >
+                                        <NavLink
+                                          to="/addCamp"
+                                          onClick={handleClose}
                                         >
-                                          <MenuList>
-                                            <MenuItem
-                                              onClick={handleClose}
-                                              style={{
-                                                fontFamily: [
-                                                  "Jua",
-                                                  '"sans-serif"',
-                                                ],
-                                                padding: 0,
-                                              }}
-                                            >
-                                              <NavLink
-                                                to="/addCamp"
-                                                onClick={handleClose}
-                                              >
-                                                부대 관리
-                                              </NavLink>
-                                            </MenuItem>
-                                            <MenuItem
-                                              onClick={handleClose}
-                                              style={{
-                                                fontFamily: [
-                                                  "Jua",
-                                                  '"sans-serif"',
-                                                ],
-                                                padding: 0,
-                                              }}
-                                            >
-                                              <NavLink
-                                                to="/approveCamp"
-                                                onClick={handleClose}
-                                              >
-                                                관리자 승인
-                                              </NavLink>
-                                            </MenuItem>
-                                          </MenuList>
-                                        </ClickAwayListener>
-                                      </Paper>
-                                    </Grow>
-                                  )}
-                                </Popper>
-                              </div>
+                                          부대 관리
+                                        </NavLink>
+                                      </MenuItem>
+                                      <MenuItem
+                                        onClick={handleClose}
+                                        style={{
+                                          fontFamily: ["Jua", '"sans-serif"'],
+                                          padding: 0,
+                                        }}
+                                      >
+                                        <NavLink
+                                          to="/approveCamp"
+                                          onClick={handleClose}
+                                        >
+                                          관리자 승인
+                                        </NavLink>
+                                      </MenuItem>
+                                    </MenuList>
+                                  </ClickAwayListener>
+                                </Paper>
+                              </Grow>
                             )}
-                          </li>
+                          </Popper>
                         </div>
-                      );
-                    }
-                  }}
-                </AuthContext.Consumer>
+                      )}
+                    </li>
+                  </div>
+                ) : (
+                  <span></span>
+                )}
               </ul>
 
               <ul className="navbar__icons">
                 <li>
                   <User />
-                  <AuthContext.Consumer>
-                    {({ currentUser }) =>
-                      currentUser ? (
-                        <NavLink to="/myInfoPage">&nbsp;내정보</NavLink>
-                      ) : (
-                        <NavLink to="/signUp">&nbsp;회원가입</NavLink>
-                      )
-                    }
-                  </AuthContext.Consumer>
+                  {currentUser ? (
+                    <NavLink to="/myInfoPage">&nbsp;내정보</NavLink>
+                  ) : (
+                    <NavLink to="/signUp">&nbsp;회원가입</NavLink>
+                  )}
                 </li>
-
-                <AuthContext.Consumer>
-                  {({ currentUser }) =>
-                    currentUser ? (
-                      <li>
-                        <Logout />
-                        <NavLink
-                          to="/"
-                          onClick={() => {
-                            app.auth().signOut();
-                          }}
-                        >
-                          &nbsp;로그아웃
-                        </NavLink>
-                      </li>
-                    ) : (
-                      <li>
-                        <Login />
-                        <NavLink to="/login">&nbsp;로그인</NavLink>
-                      </li>
-                    )
-                  }
-                </AuthContext.Consumer>
+                {currentUser ? (
+                  <li>
+                    <Logout />
+                    <NavLink to="/" onClick={signOut}>
+                      &nbsp;로그아웃
+                    </NavLink>
+                  </li>
+                ) : (
+                  <li>
+                    <Login />
+                    <NavLink to="/login">&nbsp;로그인</NavLink>
+                  </li>
+                )}
               </ul>
               <Bars />
             </nav>

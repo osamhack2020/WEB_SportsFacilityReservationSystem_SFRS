@@ -203,6 +203,9 @@ const MyInfoPage = () => {
               .updatePassword(newPassword.value)
               .then(function () {
                 setChangePasswordSnackbar(true);
+                setTimeout(() => {
+                  setValue("1");
+                }, 700);
               })
               .catch(function (error) {
                 switch (error.code) {
