@@ -7,7 +7,6 @@
 
 ## 팀소개 및 프로젝트 설명 동영상
 
-  시연영상
   [![Watch the video](https://img.youtube.com/vi/z2MGD6jGkZg/0.jpg)](https://www.youtube.com/watch?v=z2MGD6jGkZg)
 
 - 안녕하십니까 체육시설 예약체계를 만들게 된 해군 일병 정영안입니다.  이 체계를 만들게 된 계기는 제가 체육시설을 사용하면서 불편했던 점을 해결하기 위해 만들어 보았습니다. 기존의 체육시설 예약은 사용을 원하는 자가 신청을 하고 관리자가 승인, 미승인 처리를 해주는 시스템이었습니다. 그래서 그러한 점에서 불공정이 존재했고 이를 해결하기 위해서 만들었다.
@@ -20,7 +19,7 @@
 
 
 ## 기능 설계
- -  Firebase Hosting 기능을 이용하여 체육시설 예약체계를 한번 사용해보십시오!   [click]([https://reservsportsfacility.web.app/](https://reservsportsfacility.web.app/))
+ -  Firebase Hosting 기능을 이용하여 체육시설 예약체계를 한번 사용해보십시오!   [click](https://reservsportsfacility.web.app/)
 
 
 
