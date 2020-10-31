@@ -1,5 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const moment = require("moment");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -69,8 +70,16 @@ exports.scheduledFunctionCrontab = functions.pubsub
                   .collection("facility")
                   .doc(document.id)
                   .collection("reservation")
-                  .where("start", ">=", new Date(startTime))
-                  .where("start", "<=", new Date(endTime))
+                  .where(
+                    "start",
+                    ">=",
+                    new Date(moment().startOf("day").toDate().getTime())
+                  )
+                  .where(
+                    "start",
+                    "<=",
+                    new Date(moment().endOf("day").toDate().getTime())
+                  )
                   .get()
                   .then(async (snapshots) => {
                     arr = [];

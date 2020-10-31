@@ -195,15 +195,15 @@ const SelectDate = ({ camp, facility, save, isView }) => {
   const handleSelect = async ({ start, end }) => {
     let overlapped = false;
     if (start.getTime() > moment().endOf("day").toDate().getTime()) {
-      // events.forEach((value) => {
-      //   if (
-      //     value.uid === uid &&
-      //     value.start.getTime() >=
-      //       moment(start).startOf("day").toDate().getTime() &&
-      //     value.end.getTime() <= moment(end).endOf("day").toDate().getTime()
-      //   )
-      //     overlapped = true;
-      // });
+      events.forEach((value) => {
+        if (
+          value.uid === uid &&
+          value.start.getTime() >=
+            moment(start).startOf("day").toDate().getTime() &&
+          value.end.getTime() <= moment(end).endOf("day").toDate().getTime()
+        )
+          overlapped = true;
+      });
 
       if (!overlapped) {
         setReservationTitleError("");
