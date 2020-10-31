@@ -1003,8 +1003,8 @@ const AddCamp = () => {
                               <React.Fragment>
                                 <Typography color="inherit">
                                   체육대회는 등록되는 순간부터 모집이 시작되고
-                                  등록하신 체육대회는 게시판에서 확인하실 수
-                                  있습니다.
+                                  등록하신 체육대회는 체육대회 탭에서 확인하실
+                                  수 있습니다.
                                 </Typography>
                               </React.Fragment>
                             }

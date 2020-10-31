@@ -238,7 +238,7 @@ const IndexPage = () => {
           </Paper>
 
           <Grid container spacing={4} style={{ marginBottom: "10px" }}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={6} key="1">
               <Card className={classes.card}>
                 <CardContent>
                   <Typography component="h2" variant="h5">
@@ -282,7 +282,7 @@ const IndexPage = () => {
               </Card>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={6} key="2">
               <Card className={classes.card}>
                 <CardContent>
                   <Typography component="h2" variant="h5">
@@ -313,7 +313,7 @@ const IndexPage = () => {
               </Card>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={6} key="3">
               <Card className={classes.card}>
                 <CardContent>
                   <Typography component="h2" variant="h5">
@@ -367,7 +367,7 @@ const IndexPage = () => {
               </Card>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={6} key="4">
               <Card className={classes.card}>
                 <CardContent>
                   <Typography component="h2" variant="h5">
@@ -385,6 +385,7 @@ const IndexPage = () => {
                           display: "flex",
                           justifyContent: "space-between",
                         }}
+                        key={content.key}
                       >
                         <Typography
                           variant="subtitle1"

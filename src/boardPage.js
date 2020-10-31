@@ -14,7 +14,12 @@ import Container from "@material-ui/core/Container";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Chip from "@material-ui/core/Chip";
 import CardHeader from "@material-ui/core/CardHeader";
+import Box from "@material-ui/core/Box";
+import Collapse from "@material-ui/core/Collapse";
+import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 import Paper from "@material-ui/core/Paper";
+import EmojiPeopleIcon from "@material-ui/icons/EmojiPeople";
 import Modal from "@material-ui/core/Modal";
 import Backdrop from "@material-ui/core/Backdrop";
 import Slide from "@material-ui/core/Slide";
@@ -130,6 +135,16 @@ const useStyles = makeStyles((theme) => ({
       marginBottom: theme.spacing(4),
       padding: theme.spacing(3),
     },
+  },
+  papers: {
+    "@media (min-width: 600px)": {
+      width: "70%",
+    },
+    width: "95%",
+    backgroundColor: theme.palette.background.paper,
+    borderRadius: "4px",
+    boxShadow: theme.shadows[5],
+    padding: theme.spacing(2, 0, 3),
   },
   breadcrumbsTypography: {
     fontFamily: ["Jua", '"sans-serif"'],
@@ -251,6 +266,12 @@ const BoardPage = () => {
   const [authUserId, setAuthUserId] = React.useState("");
   const [isUserEnrolled, setIsUserEnrolled] = React.useState(false);
   const [enrolledSize, setEnrolledSize] = React.useState(0);
+  const [tournamentIEnrolled, setTournamentIEnrolled] = React.useState([]);
+  const [
+    tournamentIEnrolledModal,
+    setTournamentIEnrolledModal,
+  ] = React.useState(false);
+  const [enrolledTeam, setEnrolledTeam] = React.useState([]);
 
   const detailModalClose = () => {
     setTournamentDetailModal(false);
@@ -303,6 +324,7 @@ const BoardPage = () => {
   };
 
   const submitEnrollment = async () => {
+    setTournamentIEnrolled([]);
     setOpenProgress(true);
     setEnrollTeamNameError(false);
     setEnrollTeamMemberLengthError(false);
@@ -331,6 +353,14 @@ const BoardPage = () => {
       .doc(tempInfo.title)
       .collection("enroll")
       .add({
+        facility: tempInfo.facility,
+        camp: tempInfo.camp,
+        title: tempInfo.title,
+        recruitEndDate: new Date(tempInfo.recruitEndDate),
+        currentEnrolledTeamCount: tempInfo.currentEnrolledTeamCount,
+        enrollNumber: tempInfo.enrollNumber,
+        prize: tempInfo.prize,
+        sport: tempInfo.sport,
         enrollTeamName,
         enrollTeamLeaderName,
         enrollTeamMemberLength,
@@ -344,6 +374,25 @@ const BoardPage = () => {
       .doc(tempInfo.title)
       .update({
         currentEnrolledTeamCount: enrolledSize + 1,
+      });
+
+    app
+      .firestore()
+      .collectionGroup("enroll")
+      .where("uid", "==", authUserId)
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setTournamentIEnrolled((oldArray) => [
+            ...oldArray,
+            {
+              title: doc.data().title,
+              recruitEndDate: doc.data().recruitEndDate.seconds * 1000,
+              currentEnrolledTeamCount: doc.data().currentEnrolledTeamCount,
+              enrollNumber: doc.data().enrollNumber,
+            },
+          ]);
+        });
       });
 
     setEnrollSnack(true);
@@ -529,6 +578,91 @@ const BoardPage = () => {
     modalCloseAndUpdate();
   };
 
+  const CollapsibleRow = (props) => {
+    const { team } = props;
+    const [collapse, setCollapse] = React.useState(false);
+
+    return (
+      <React.Fragment key={team.key}>
+        <TableRow>
+          <TableCell>
+            <IconButton
+              aria-label="expand row"
+              size="small"
+              onClick={() => setCollapse(!collapse)}
+            >
+              {collapse ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+            </IconButton>
+          </TableCell>
+          <TableCell component="th" scope="row">
+            {team.enrollTeamName}
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+            <Collapse in={collapse} timeout="auto" unmountOnExit>
+              <Box margin={1}>
+                <Typography variant="h6" gutterBottom component="div">
+                  팀 상세정보
+                </Typography>
+                <Table size="small" aria-label="purchases">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>팀명</TableCell>
+                      <TableCell>팀 대표선수</TableCell>
+                      <TableCell align="right">팀원 수</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell component="th" scope="row">
+                        {team.enrollTeamName}
+                      </TableCell>
+                      <TableCell>{team.enrollTeamLeaderName}</TableCell>
+                      <TableCell align="right">
+                        {team.enrollTeamMemberLength}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </Box>
+            </Collapse>
+          </TableCell>
+        </TableRow>
+      </React.Fragment>
+    );
+  };
+
+  const showTournamentIEnrolled = (tournamentName) => {
+    app
+      .firestore()
+      .collection("tournament")
+      .doc(tournamentName)
+      .collection("enroll")
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setEnrolledTeam((oldArray) => [
+            ...oldArray,
+            {
+              enrollTeamLeaderName: doc.data().enrollTeamLeaderName,
+              enrollTeamMemberLength: doc.data().enrollTeamMemberLength,
+              enrollTeamName: doc.data().enrollTeamName,
+              uid: doc.data().uid,
+              key: doc.id,
+            },
+          ]);
+        });
+      });
+
+    setTournamentIEnrolledModal(true);
+  };
+
+  const closeEnrolledModal = () => {
+    setTournamentIEnrolledModal(false);
+    setEnrolledTeam([]);
+  };
+
   const showTournament = (tournament) => {
     setTournamentDetailModal(true);
 
@@ -580,6 +714,25 @@ const BoardPage = () => {
               setUserData(
                 `${doc.data().military} ${doc.data().rank} ${doc.data().name}`
               );
+            });
+          });
+
+        app
+          .firestore()
+          .collectionGroup("enroll")
+          .where("uid", "==", user.uid)
+          .get()
+          .then((snapshot) => {
+            snapshot.forEach((doc) => {
+              setTournamentIEnrolled((oldArray) => [
+                ...oldArray,
+                {
+                  title: doc.data().title,
+                  recruitEndDate: doc.data().recruitEndDate.seconds * 1000,
+                  currentEnrolledTeamCount: doc.data().currentEnrolledTeamCount,
+                  enrollNumber: doc.data().enrollNumber,
+                },
+              ]);
             });
           });
       }
@@ -681,7 +834,7 @@ const BoardPage = () => {
             color="textPrimary"
             className={classes.breadcrumbsTypography}
           >
-            게시판
+            체육대회
           </Typography>
         </Breadcrumbs>
         <div className={classes.heroContent}>
@@ -692,7 +845,7 @@ const BoardPage = () => {
               color="textPrimary"
               className={classes.typography}
             >
-              게시판
+              체육대회
             </Typography>
           </Container>
         </div>
@@ -716,6 +869,15 @@ const BoardPage = () => {
                     label="체육대회"
                     value="1"
                     icon={<GroupIcon />}
+                  />
+                  <BottomNavigationAction
+                    classes={{
+                      label: classes.navigationStyle,
+                      selected: classes.navigationSelected,
+                    }}
+                    label="내가 참여하는 체육대회"
+                    value="3"
+                    icon={<EmojiPeopleIcon />}
                   />
                   <BottomNavigationAction
                     classes={{
@@ -1190,7 +1352,7 @@ const BoardPage = () => {
               </Slide>
             </Modal>
           </div>
-        ) : (
+        ) : value === "1" ? (
           <Container className={classes.cardGrid} maxWidth="md">
             <Grid container spacing={4}>
               {tournaments.length === 0 ? (
@@ -1251,7 +1413,10 @@ const BoardPage = () => {
                         </Typography>
                       </CardContent>
                       <CardActions
-                        style={{ display: "flex", justifyContent: "flex-end" }}
+                        style={{
+                          display: "flex",
+                          justifyContent: "flex-end",
+                        }}
                       >
                         <Button
                           color="primary"
@@ -1594,6 +1759,136 @@ const BoardPage = () => {
                 </div>
               </Slide>
             </Modal>
+          </Container>
+        ) : (
+          <Container className={classes.cardGrid} maxWidth="md">
+            <Grid container spacing={4}>
+              {tournamentIEnrolled.length === 0 ? (
+                <Typography
+                  variant="h5"
+                  component="h2"
+                  className={classes.typography}
+                >
+                  참여하신 체육대회가 없습니다.
+                </Typography>
+              ) : (
+                tournamentIEnrolled.map((tournament) => (
+                  <Grid item key={tournament.title} xs={12} sm={6} md={4}>
+                    <Card className={classes.card}>
+                      <CardHeader
+                        style={{ padding: "8px" }}
+                        avatar={
+                          new Date().getTime() < tournament.recruitEndDate ? (
+                            tournament.currentEnrolledTeamCount <
+                            tournament.enrollNumber ? (
+                              <Chip
+                                label="모집중"
+                                size="small"
+                                color="primary"
+                              />
+                            ) : (
+                              <Chip
+                                label="모집완료"
+                                size="small"
+                                color="secondary"
+                              />
+                            )
+                          ) : (
+                            <Chip label="모집종료" size="small" />
+                          )
+                        }
+                      />
+                      <CardContent
+                        className={classes.cardContent}
+                        style={{ paddingTop: 5, paddingBottom: 0 }}
+                      >
+                        <Typography
+                          variant="h5"
+                          component="h2"
+                          className={classes.typography}
+                        >
+                          {tournament.title}
+                        </Typography>
+                        <Typography
+                          variant="subtitle2"
+                          className={classes.typography}
+                          style={{ paddingTop: 5 }}
+                        >
+                          모집마감일:&nbsp;
+                          {moment(new Date(tournament.recruitEndDate)).format(
+                            "YYYY년 M월 D일"
+                          )}
+                        </Typography>
+                      </CardContent>
+                      <CardActions
+                        style={{
+                          display: "flex",
+                          justifyContent: "flex-end",
+                        }}
+                      >
+                        <Button
+                          color="primary"
+                          onClick={() =>
+                            showTournamentIEnrolled(tournament.title)
+                          }
+                        >
+                          자세히
+                        </Button>
+                      </CardActions>
+                    </Card>
+                  </Grid>
+                ))
+              )}
+              <Modal
+                className={classes.modal}
+                open={tournamentIEnrolledModal}
+                onClose={closeEnrolledModal}
+                closeAfterTransition
+                BackdropComponent={Backdrop}
+                BackdropProps={{
+                  timeout: 500,
+                }}
+              >
+                <Slide direction="up" in={tournamentIEnrolledModal}>
+                  <div className={classes.papers}>
+                    <Container component="main" maxWidth="md">
+                      <Typography className={classes.modalTypography}>
+                        체육대회 관리하기
+                      </Typography>
+                      <TableContainer
+                        component={Paper}
+                        className={classes.tableContainer}
+                      >
+                        <Table>
+                          <TableBody>
+                            {enrolledTeam.length === 0 ? (
+                              <TableRow>
+                                <TableCell>아직 참가 팀이 없습니다.</TableCell>
+                              </TableRow>
+                            ) : (
+                              enrolledTeam.map((team) => (
+                                <CollapsibleRow key={team.key} team={team} />
+                              ))
+                            )}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+
+                      <span className={classes.modalButtons}>
+                        <Button
+                          onClick={closeEnrolledModal}
+                          variant="contained"
+                          color="secondary"
+                          className={classes.button}
+                        >
+                          닫기
+                        </Button>
+                      </span>
+                    </Container>
+                  </div>
+                </Slide>
+              </Modal>
+            </Grid>
           </Container>
         )}
       </main>

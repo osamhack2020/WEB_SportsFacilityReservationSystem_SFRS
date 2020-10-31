@@ -109,7 +109,7 @@ const App = () => {
                   <NavLink to="/showReservation">예약확인</NavLink>
                 </li>
                 <li>
-                  <NavLink to="/boardPage">게시판</NavLink>
+                  <NavLink to="/boardPage">체육대회</NavLink>
                 </li>
                 <li>
                   <NavLink to="/myPage">마이페이지</NavLink>
