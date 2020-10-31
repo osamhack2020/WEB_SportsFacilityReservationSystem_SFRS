@@ -6,7 +6,9 @@ import Stepper from "@material-ui/core/Stepper";
 import Step from "@material-ui/core/Step";
 import StepLabel from "@material-ui/core/StepLabel";
 import Button from "@material-ui/core/Button";
+import Tooltip from "@material-ui/core/Tooltip";
 import Typography from "@material-ui/core/Typography";
+import IconButton from "@material-ui/core/IconButton";
 import SelectCamp from "./checkoutform/SelectCamp";
 import SelectFacility from "./checkoutform/SelectFacility";
 import SelectDate from "./checkoutform/SelectDate";
@@ -16,6 +18,7 @@ import Snackbar from "@material-ui/core/Snackbar";
 import Slide from "@material-ui/core/Slide";
 import Table from "@material-ui/core/Table";
 import Container from "@material-ui/core/Container";
+import HelpIcon from "@material-ui/icons/Help";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
 import TableContainer from "@material-ui/core/TableContainer";
@@ -242,6 +245,24 @@ export default function Checkout() {
               >
                 체육시설 예약하기
               </Typography>
+              <Tooltip
+                disableFocusListener
+                title={
+                  <React.Fragment>
+                    <Typography color="inherit">
+                      체육시설에 예약이 겹치는 경우 가장 많은 팀들이 해당
+                      체육시설을 사용할 수 있도록 최대 사용자 기준으로 승인
+                      처리를 하고 있습니다. 만약 확률을 높이고 싶다면
+                      최대예약수가 커지게 예약하시거나 다른 사용자의 예약이
+                      겹친다면 최대예약수가 같게 예약을 진행하십시오.
+                    </Typography>
+                  </React.Fragment>
+                }
+              >
+                <IconButton>
+                  <HelpIcon />
+                </IconButton>
+              </Tooltip>
               <Stepper activeStep={activeStep} className={classes.stepper}>
                 {steps.map((label) => (
                   <Step key={label}>
