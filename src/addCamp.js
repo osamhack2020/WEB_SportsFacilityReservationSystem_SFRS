@@ -5,11 +5,16 @@ import CardActions from "@material-ui/core/CardActions";
 import CardContent from "@material-ui/core/CardContent";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Grid from "@material-ui/core/Grid";
+import Box from "@material-ui/core/Box";
+import Collapse from "@material-ui/core/Collapse";
 import Typography from "@material-ui/core/Typography";
 import GroupIcon from "@material-ui/icons/Group";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import Tooltip from "@material-ui/core/Tooltip";
+import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
+import TableHead from "@material-ui/core/TableHead";
 import HelpIcon from "@material-ui/icons/Help";
 import IconButton from "@material-ui/core/IconButton";
 import TextField from "@material-ui/core/TextField";
@@ -196,7 +201,6 @@ const AddCamp = () => {
   ]);
   const [snackBar, setSnackBar] = React.useState(false);
   const [pendingCamps, setPendingCamps] = React.useState([]);
-
   const handleAddFields = () => {
     setInputFields((oldArray) => [...oldArray, { facility: "", location: "" }]);
     setFacilityError((oldArray) => [
@@ -251,6 +255,7 @@ const AddCamp = () => {
   const [manageTournamentModal, setManageTournamentModal] = React.useState(
     false
   );
+  const [manageEnrollModal, setManageEnrollModal] = React.useState(false);
 
   const addTournament = async () => {
     setOpenProgress(true);
@@ -524,6 +529,91 @@ const AddCamp = () => {
     setTournamentModal(true);
   };
 
+  const manageEnroll = (tournamentName) => {
+    app
+      .firestore()
+      .collection("tournament")
+      .doc(tournamentName)
+      .collection("enroll")
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setEnrolledTeam((oldArray) => [
+            ...oldArray,
+            {
+              enrollTeamLeaderName: doc.data().enrollTeamLeaderName,
+              enrollTeamMemberLength: doc.data().enrollTeamMemberLength,
+              enrollTeamName: doc.data().enrollTeamName,
+              uid: doc.data().uid,
+              key: doc.id,
+            },
+          ]);
+        });
+      });
+
+    setManageEnrollModal(true);
+  };
+
+  const manageEnrollModalClose = () => {
+    setManageEnrollModal(false);
+    setEnrolledTeam([]);
+  };
+
+  const CollapsibleRow = (props) => {
+    const { team } = props;
+    const [collapse, setCollapse] = React.useState(false);
+
+    return (
+      <React.Fragment key={team.key}>
+        <TableRow className={classes.root}>
+          <TableCell>
+            <IconButton
+              aria-label="expand row"
+              size="small"
+              onClick={() => setCollapse(!collapse)}
+            >
+              {collapse ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+            </IconButton>
+          </TableCell>
+          <TableCell component="th" scope="row">
+            {team.enrollTeamName}
+          </TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+            <Collapse in={collapse} timeout="auto" unmountOnExit>
+              <Box margin={1}>
+                <Typography variant="h6" gutterBottom component="div">
+                  팀 상세정보
+                </Typography>
+                <Table size="small" aria-label="purchases">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>팀명</TableCell>
+                      <TableCell>팀 대표선수</TableCell>
+                      <TableCell align="right">팀원 수</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell component="th" scope="row">
+                        {team.enrollTeamName}
+                      </TableCell>
+                      <TableCell>{team.enrollTeamLeaderName}</TableCell>
+                      <TableCell align="right">
+                        {team.enrollTeamMemberLength}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </Box>
+            </Collapse>
+          </TableCell>
+        </TableRow>
+      </React.Fragment>
+    );
+  };
+
   const manageTournament = (name) => {
     app
       .firestore()
@@ -542,26 +632,6 @@ const AddCamp = () => {
           startTournamentDate:
             snapshot.data().startTournamentDate.second * 1000,
           uid: snapshot.data().uid,
-        });
-      });
-
-    app
-      .firestore()
-      .collection("tournament")
-      .doc(name)
-      .collection("enroll")
-      .get()
-      .then((snapshot) => {
-        snapshot.forEach((doc) => {
-          setEnrolledTeam((oldArray) => [
-            ...oldArray,
-            {
-              enrollTeamLeaderName: doc.data().enrollTeamLeaderName,
-              enrollTeamMemberLength: doc.data().enrollTeamMemberLength,
-              enrollTeamName: doc.data().enrollTeamName,
-              uid: doc.data().uid,
-            },
-          ]);
         });
       });
 
@@ -1585,7 +1655,7 @@ const AddCamp = () => {
                           <Button
                             value={tournament}
                             color="primary"
-                            onClick={() => manageTournament(tournament)}
+                            onClick={() => manageEnroll(tournament)}
                           >
                             참가자 관리
                           </Button>
@@ -1754,6 +1824,57 @@ const AddCamp = () => {
                       <span className={classes.modalButtons}>
                         <Button
                           onClick={manageTournamentModalClose}
+                          variant="contained"
+                          color="secondary"
+                          className={classes.button}
+                        >
+                          닫기
+                        </Button>
+                      </span>
+                    </Container>
+                  </div>
+                </Slide>
+              </Modal>
+
+              <Modal
+                id="showFacility"
+                className={classes.modal}
+                open={manageEnrollModal}
+                onClose={manageEnrollModalClose}
+                closeAfterTransition
+                BackdropComponent={Backdrop}
+                BackdropProps={{
+                  timeout: 500,
+                }}
+              >
+                <Slide direction="up" in={manageEnrollModal}>
+                  <div className={classes.paper}>
+                    <Container component="main" maxWidth="md">
+                      <Typography className={classes.modalTypography}>
+                        체육대회 관리하기
+                      </Typography>
+                      <TableContainer
+                        component={Paper}
+                        className={classes.tableContainer2}
+                      >
+                        <Table>
+                          <TableBody>
+                            {enrolledTeam.length === 0 ? (
+                              <TableRow>
+                                <TableCell>아직 참가 팀이 없습니다.</TableCell>
+                              </TableRow>
+                            ) : (
+                              enrolledTeam.map((team) => (
+                                <CollapsibleRow key={team.key} team={team} />
+                              ))
+                            )}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+
+                      <span className={classes.modalButtons}>
+                        <Button
+                          onClick={manageEnrollModalClose}
                           variant="contained"
                           color="secondary"
                           className={classes.button}
