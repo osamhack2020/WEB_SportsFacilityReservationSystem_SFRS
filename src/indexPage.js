@@ -290,7 +290,7 @@ const IndexPage = () => {
                   </Typography>
                   {tournaments.length === 0 ? (
                     <Typography variant="h4" className={classes.typography}>
-                      <AnnouncementIcon style={{ marginRight: "5px" }} />내
+                      <AnnouncementIcon style={{ marginRight: "5px" }} />
                       개최중인 체육대회가 존재하지 않습니다.
                     </Typography>
                   ) : (
@@ -375,7 +375,7 @@ const IndexPage = () => {
                   </Typography>
                   {adminBoardContent.length === 0 ? (
                     <Typography variant="h4" className={classes.typography}>
-                      <AnnouncementIcon style={{ marginRight: "5px" }} />내
+                      <AnnouncementIcon style={{ marginRight: "5px" }} />
                       공지글이 존재하지 않습니다.
                     </Typography>
                   ) : (

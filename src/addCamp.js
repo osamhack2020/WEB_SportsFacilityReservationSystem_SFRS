@@ -1037,7 +1037,7 @@ const AddCamp = () => {
                             </Button>
                           </span>
                           <Snackbar
-                            autoHideDuration={2000}
+                            autoHideDuration={1500}
                             open={tournamentSnackbar}
                             onClose={() => setTournamentSnackbar(false)}
                             TransitionComponent={Slide}
@@ -1303,7 +1303,7 @@ const AddCamp = () => {
                                     확인
                                   </Button>
                                   <Snackbar
-                                    autoHideDuration={2000}
+                                    autoHideDuration={1500}
                                     open={snackBar}
                                     onClose={() => setSnackBar(false)}
                                     TransitionComponent={Slide}
@@ -1514,7 +1514,7 @@ const AddCamp = () => {
                               <CircularProgress color="inherit" />
                             </Backdrop>
                             <Snackbar
-                              autoHideDuration={2000}
+                              autoHideDuration={1500}
                               open={snackBar}
                               onClose={() => setSnackBar(false)}
                               TransitionComponent={Slide}

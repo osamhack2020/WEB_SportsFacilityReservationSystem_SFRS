@@ -195,15 +195,15 @@ const SelectDate = ({ camp, facility, save, isView }) => {
   const handleSelect = async ({ start, end }) => {
     let overlapped = false;
     if (start.getTime() > moment().endOf("day").toDate().getTime()) {
-      events.forEach((value) => {
-        if (
-          value.uid === uid &&
-          value.start.getTime() >=
-            moment(start).startOf("day").toDate().getTime() &&
-          value.end.getTime() <= moment(end).endOf("day").toDate().getTime()
-        )
-          overlapped = true;
-      });
+      // events.forEach((value) => {
+      //   if (
+      //     value.uid === uid &&
+      //     value.start.getTime() >=
+      //       moment(start).startOf("day").toDate().getTime() &&
+      //     value.end.getTime() <= moment(end).endOf("day").toDate().getTime()
+      //   )
+      //     overlapped = true;
+      // });
 
       if (!overlapped) {
         setReservationTitleError("");
@@ -223,7 +223,7 @@ const SelectDate = ({ camp, facility, save, isView }) => {
     if (reservationTitle !== "") {
       setEvents((oldArray) => [
         ...oldArray,
-        { start, end, title: reservationTitle },
+        { start, end, title: reservationTitle, uid },
       ]);
       save({ start: start, end: end, title: reservationTitle });
       setCount(1);
@@ -285,6 +285,8 @@ const SelectDate = ({ camp, facility, save, isView }) => {
   return (
     <div>
       <Calendar
+        min={new Date(0, 0, 0, 7, 0, 0)}
+        max={new Date(0, 0, 0, 22, 0, 0)}
         onNavigate={onNavigate}
         selectable
         localizer={localizer}

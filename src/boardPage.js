@@ -181,16 +181,7 @@ const useStyles = makeStyles((theme) => ({
   button: {
     marginLeft: theme.spacing(1),
   },
-  papers: {
-    "@media (min-width: 600px)": {
-      width: "70%",
-    },
-    width: "95%",
-    backgroundColor: theme.palette.background.paper,
-    borderRadius: "4px",
-    boxShadow: theme.shadows[5],
-    padding: theme.spacing(2, 0, 3),
-  },
+
   modalButtons: {
     marginTop: "10px",
     display: "flex",

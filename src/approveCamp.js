@@ -166,7 +166,7 @@ const AddCamp = () => {
   const [snackBar, setSnackBar] = React.useState(false);
   const [declineSnackbar, setDeclineSnackbar] = React.useState(false);
 
-  const declineCamp = () => {
+  const declineCamp = async () => {
     setCamps([]);
 
     const db = app.firestore();
@@ -176,7 +176,7 @@ const AddCamp = () => {
       setOpenProgress(false);
     }, 500);
 
-    db.collection("pendingApproval").doc(requestedCamp).delete();
+    await db.collection("pendingApproval").doc(requestedCamp).delete();
 
     db.collection("pendingApproval")
       .get()
@@ -475,14 +475,14 @@ const AddCamp = () => {
                               <CircularProgress color="inherit" />
                             </Backdrop>
                             <Snackbar
-                              autoHideDuration={2000}
+                              autoHideDuration={1600}
                               open={snackBar}
                               onClose={() => setSnackBar(false)}
                               TransitionComponent={Slide}
                               message="부대를 추가하였습니다."
                             />
                             <Snackbar
-                              autoHideDuration={2000}
+                              autoHideDuration={1600}
                               open={declineSnackbar}
                               onClose={() => setDeclineSnackbar(false)}
                               TransitionComponent={Slide}
