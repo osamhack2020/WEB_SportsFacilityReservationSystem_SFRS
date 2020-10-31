@@ -49,17 +49,18 @@
  -  react-big-calendar
  -  React Router
 
-## 설치 안내 (Installation Process)
+## 설치 안내 (Installation Process) 및 프로젝트 사용법 (Getting Started)
+
 ```bash
 $ git clone https://github.com/osamhack2020/WEB_SportsFacilityReservationSystem_SFRS.git
 $ yarn 
-$ yarn start
 ```
+- db로 사용한 firebase 접근을 위해 .env 파일을 설정해줘야 합니다. 
+- (만약 env 파일이 필요하시다면  youngan.jung@gmail.com 으로 연락 부탁드립니다.)
 
-## 프로젝트 사용법 (Getting Started)
-- 위의 설명대로 yarn start 명령어를 치면 인터넷 브라우저가 뜰것이다. 
-- 그럼 회원가입을 이용하여 체육시설 예약체계를 사용하면 된다.
-
+```bash
+$ yarn start 
+```
  
 ## 팀 정보 (Team Information)
 - 정영안 (duddks1115@gmail.com), Github Id: younganJung1115
