@@ -246,6 +246,11 @@ const AddCamp = () => {
   const [tournamentSport, setTournamentSport] = React.useState("");
   const [tournamentSportError, setTournamentSportError] = React.useState(false);
   const [tournamentOpendByMe, setTournamentOpendByMe] = React.useState([]);
+  const [enrolledTeam, setEnrolledTeam] = React.useState([]);
+  const [tournamentInfo, setTournamentInfo] = React.useState({});
+  const [manageTournamentModal, setManageTournamentModal] = React.useState(
+    false
+  );
 
   const addTournament = async () => {
     setOpenProgress(true);
@@ -517,6 +522,56 @@ const AddCamp = () => {
 
     setTournamentCamp(camp);
     setTournamentModal(true);
+  };
+
+  const manageTournament = (name) => {
+    app
+      .firestore()
+      .collection("tournament")
+      .doc(name)
+      .get()
+      .then((snapshot) => {
+        setTournamentInfo({
+          camp: snapshot.data().camp,
+          currentEnrolledTeamCount: snapshot.data().currentEnrolledTeamCount,
+          enrollNumber: snapshot.data().enrollNumber,
+          facility: snapshot.data().facility,
+          prize: snapshot.data().prize,
+          recruitEndDate: snapshot.data().recruitEndDate.seconds * 1000,
+          sport: snapshot.data().sport,
+          startTournamentDate:
+            snapshot.data().startTournamentDate.second * 1000,
+          uid: snapshot.data().uid,
+        });
+      });
+
+    app
+      .firestore()
+      .collection("tournament")
+      .doc(name)
+      .collection("enroll")
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setEnrolledTeam((oldArray) => [
+            ...oldArray,
+            {
+              enrollTeamLeaderName: doc.data().enrollTeamLeaderName,
+              enrollTeamMemberLength: doc.data().enrollTeamMemberLength,
+              enrollTeamName: doc.data().enrollTeamName,
+              uid: doc.data().uid,
+            },
+          ]);
+        });
+      });
+
+    setManageTournamentModal(true);
+  };
+
+  const manageTournamentModalClose = () => {
+    setManageTournamentModal(false);
+    setEnrolledTeam([]);
+    setTournamentInfo({});
   };
 
   return (
@@ -1523,9 +1578,16 @@ const AddCamp = () => {
                           <Button
                             value={tournament}
                             color="primary"
-                            onClick={() => showPendingFacility(tournament)}
+                            onClick={() => manageTournament(tournament)}
                           >
                             자세히
+                          </Button>
+                          <Button
+                            value={tournament}
+                            color="primary"
+                            onClick={() => manageTournament(tournament)}
+                          >
+                            참가자 관리
                           </Button>
                         </CardActions>
                       </Card>
@@ -1533,6 +1595,176 @@ const AddCamp = () => {
                   ))
                 )}
               </Grid>
+              <Modal
+                id="showFacility"
+                className={classes.modal}
+                open={manageTournamentModal}
+                onClose={manageTournamentModalClose}
+                closeAfterTransition
+                BackdropComponent={Backdrop}
+                BackdropProps={{
+                  timeout: 500,
+                }}
+              >
+                <Slide direction="up" in={manageTournamentModal}>
+                  <div className={classes.paper}>
+                    <Container component="main" maxWidth="md">
+                      <Typography className={classes.modalTypography}>
+                        체육대회 관리하기
+                      </Typography>
+                      <TableContainer
+                        component={Paper}
+                        className={classes.tableContainer2}
+                      >
+                        <Table>
+                          <TableBody>
+                            <TableRow key="title">
+                              <TableCell
+                                component="th"
+                                scope="row"
+                                className={classes.tableRow}
+                              >
+                                개최부대
+                              </TableCell>
+                              <TableCell
+                                align="left"
+                                className={classes.tableCell}
+                              >
+                                {tournamentInfo.camp}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow key="writerName">
+                              <TableCell
+                                component="th"
+                                scope="row"
+                                className={classes.tableRow}
+                              >
+                                체육시설
+                              </TableCell>
+                              <TableCell
+                                align="left"
+                                className={classes.tableCell}
+                              >
+                                {tournamentInfo.facility}
+                              </TableCell>
+                            </TableRow>
+                            <TableRow key="content">
+                              <TableCell
+                                component="th"
+                                scope="row"
+                                className={classes.tableRow}
+                              >
+                                포상
+                              </TableCell>
+                              <TableCell
+                                align="left"
+                                className={classes.tableCell}
+                              >
+                                {tournamentInfo.prize}
+                              </TableCell>
+                            </TableRow>
+
+                            <TableRow key="sport">
+                              <TableCell
+                                component="th"
+                                scope="row"
+                                className={classes.tableRow}
+                              >
+                                종목
+                              </TableCell>
+                              <TableCell
+                                align="left"
+                                className={classes.tableCell}
+                              >
+                                {tournamentInfo.sport}
+                              </TableCell>
+                            </TableRow>
+
+                            <TableRow key="enrollNumber">
+                              <TableCell
+                                component="th"
+                                scope="row"
+                                className={classes.tableRow}
+                              >
+                                참가팀 수
+                              </TableCell>
+                              <TableCell
+                                align="left"
+                                className={classes.tableCell}
+                              >
+                                {tournamentInfo.enrollNumber}
+                              </TableCell>
+                            </TableRow>
+
+                            <TableRow key="currentEnrolledTeamCount">
+                              <TableCell
+                                component="th"
+                                scope="row"
+                                className={classes.tableRow}
+                              >
+                                현재 참가팀 수
+                              </TableCell>
+                              <TableCell
+                                align="left"
+                                className={classes.tableCell}
+                              >
+                                {tournamentInfo.currentEnrolledTeamCount}
+                              </TableCell>
+                            </TableRow>
+
+                            <TableRow key="recruitEndDate">
+                              <TableCell
+                                component="th"
+                                scope="row"
+                                className={classes.tableRow}
+                              >
+                                모집 마감일
+                              </TableCell>
+                              <TableCell
+                                align="left"
+                                className={classes.tableCell}
+                              >
+                                {moment(
+                                  new Date(tournamentInfo.recruitEndDate)
+                                ).format("YYYY년 M월 D일")}
+                              </TableCell>
+                            </TableRow>
+
+                            <TableRow key="startTournamentDate">
+                              <TableCell
+                                component="th"
+                                scope="row"
+                                className={classes.tableRow}
+                              >
+                                체육대회 시작일
+                              </TableCell>
+                              <TableCell
+                                align="left"
+                                className={classes.tableCell}
+                              >
+                                {moment(
+                                  new Date(tournamentInfo.startTournamentDate)
+                                ).format("YYYY년 M월 D일 ")}
+                              </TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+
+                      <span className={classes.modalButtons}>
+                        <Button
+                          onClick={manageTournamentModalClose}
+                          variant="contained"
+                          color="secondary"
+                          className={classes.button}
+                        >
+                          닫기
+                        </Button>
+                      </span>
+                    </Container>
+                  </div>
+                </Slide>
+              </Modal>
             </Container>
           )}
         </main>

@@ -13,7 +13,6 @@ import Table from "@material-ui/core/Table";
 import Paper from "@material-ui/core/Paper";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Snackbar from "@material-ui/core/Snackbar";
-import AddToQueueIcon from "@material-ui/icons/AddToQueue";
 import Slide from "@material-ui/core/Slide";
 import Container from "@material-ui/core/Container";
 import TableCell from "@material-ui/core/TableCell";
@@ -165,8 +164,11 @@ const AddCamp = () => {
   const [open, setOpen] = React.useState(false);
   const [openProgress, setOpenProgress] = React.useState(false);
   const [snackBar, setSnackBar] = React.useState(false);
+  const [declineSnackbar, setDeclineSnackbar] = React.useState(false);
 
-  const approveCamp = async () => {
+  const declineCamp = () => {
+    setCamps([]);
+
     const db = app.firestore();
 
     setOpenProgress(true);
@@ -174,13 +176,40 @@ const AddCamp = () => {
       setOpenProgress(false);
     }, 500);
 
-    await db
-      .collection("camp")
+    db.collection("pendingApproval").doc(requestedCamp).delete();
+
+    db.collection("pendingApproval")
+      .get()
+      .then((snapshot) => {
+        snapshot.forEach((doc) => {
+          setCamps((oldArray) => [
+            ...oldArray,
+            { camp: doc.id, uid: doc.data().uid },
+          ]);
+        });
+      });
+
+    setDeclineSnackbar(true);
+    setTimeout(() => {
+      handleClose();
+    }, 1700);
+  };
+
+  const approveCamp = () => {
+    setCamps([]);
+    const db = app.firestore();
+
+    setOpenProgress(true);
+    setTimeout(() => {
+      setOpenProgress(false);
+    }, 500);
+
+    //여기는 실제 camp에 작성하는 것
+    db.collection("camp")
       .doc(requestedCamp)
       .set({ uid: requestedFacility[0].uid });
-
     for (let i = 0; i < requestedFacility.length; i++) {
-      await app
+      app
         .firestore()
         .collection("camp")
         .doc(requestedCamp)
@@ -189,15 +218,17 @@ const AddCamp = () => {
         .set({ location: requestedFacility[i].location });
     }
 
-    await db.collection("pendingApproval").doc(requestedCamp).delete();
+    // 승인대기 부대를 삭제하는 것
+    db.collection("pendingApproval").doc(requestedCamp).delete();
 
-    setCamps([]);
-    await db
-      .collection("pendingApproval")
+    db.collection("pendingApproval")
       .get()
       .then((snapshot) => {
         snapshot.forEach((doc) => {
-          setCamps((oldArray) => [...oldArray, doc.id]);
+          setCamps((oldArray) => [
+            ...oldArray,
+            { camp: doc.id, uid: doc.data().uid },
+          ]);
         });
       });
 
@@ -285,17 +316,6 @@ const AddCamp = () => {
               >
                 관리자 승인
               </Typography>
-              {/* <Typography
-                variant="h6"
-                align="center"
-                color="textSecondary"
-                paragraph
-                className={classes.typography}
-              >
-                각 부대관리자들이 추가한 부대들을 승인 또는 거절할 수 있습니다.
-                관리자들이 신청한 부대를 승인한다면 실제 사용자들이 바로 예약을
-                진행할 수 있습니다.
-              </Typography> */}
             </Container>
           </div>
           <div>
@@ -318,15 +338,6 @@ const AddCamp = () => {
                       label="승인 대기중인 부대"
                       value="1"
                       icon={<HourglassEmptyIcon />}
-                    />
-                    <BottomNavigationAction
-                      classes={{
-                        label: classes.navigationStyle,
-                        selected: classes.navigationSelected,
-                      }}
-                      label="나중에 뭐 추가할수도 있음"
-                      value="2"
-                      icon={<AddToQueueIcon />}
                     />
                   </BottomNavigation>
                 </Grid>
@@ -450,9 +461,9 @@ const AddCamp = () => {
                               승인
                             </Button>
                             <Button
-                              onClick={approveCamp}
+                              onClick={declineCamp}
                               variant="contained"
-                              // color="primary"
+                              color="secondary"
                               className={classes.button}
                             >
                               미승인
@@ -470,10 +481,16 @@ const AddCamp = () => {
                               TransitionComponent={Slide}
                               message="부대를 추가하였습니다."
                             />
+                            <Snackbar
+                              autoHideDuration={2000}
+                              open={declineSnackbar}
+                              onClose={() => setDeclineSnackbar(false)}
+                              TransitionComponent={Slide}
+                              message="부대 추가를 거부하였습니다."
+                            />
                             <Button
                               onClick={handleClose}
                               variant="contained"
-                              color="secondary"
                               className={classes.button}
                             >
                               닫기
