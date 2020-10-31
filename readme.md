@@ -1,5 +1,3 @@
-
-
 # <img src="https://user-images.githubusercontent.com/68759940/97770133-1b1d6680-1b74-11eb-927f-39b23ce15d5a.JPG" width="50%"></img>
 국군장병들의 원활한 체육시설 이용을 위한 체육시설예약체계
 
@@ -18,12 +16,13 @@
 
 ## 기술 스택 (Technique Used) 
 ### Server(back-end)
- -  nodejs, php, java 등 서버 언어 버전 
- - express, laravel, sptring boot 등 사용한 프레임워크 
- - DB 등 사용한 다른 프로그램 
- 
+ -  Node.js
+ -  Firebase Cloud Firestore
+ -  Firebase Authentication
+ -  Firebase Functions  
 ### front-end
  -  react.js
+ -  Create React App
  -  Material UI
  -  FontAwesome
  -  Moment.js
@@ -38,11 +37,20 @@ $ yarn start
 ```
 
 ## 프로젝트 사용법 (Getting Started)
+여기다가 화면 스크린 캡쳐해서 보여주면 된다.
 
  
 ## 팀 정보 (Team Information)
-- hong gil dong (hong999@gmail.com), Github Id: gildong999
-- kim su ji (suji999@gmail.com), Github Id: suji999
+- 정영안 (duddks1115@gmail.com), Github Id: younganJung1115
 
 ## 저작권 및 사용권 정보 (Copyleft / End User License)
- * [MIT](https://github.com/osam2020-WEB/Sample-ProjectName-TeamName/blob/master/license.md)
+ * [MIT](https://github.com/osamhack2020/WEB_SportsFacilityReservationSystem_SFRS/blob/master/license.md)
+<Project Name>
+
+Copyright © 2020 Youngan Jung
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
